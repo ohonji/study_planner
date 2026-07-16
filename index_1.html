@@ -1,0 +1,3543 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Study Planner</title>
+<meta name="theme-color" content="#C63D2F">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Study Planner">
+<link rel="manifest" id="pwaManifestLink">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23C63D2F'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%98%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23C63D2F'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%98%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EEF3F8;
+    --card:#FFFFFF;
+    --ink:#232A3B;
+    --ink-soft:#5B6472;
+    --line:#DCE4EE;
+    --stamp:#C63D2F;
+    --stamp-soft:rgba(198,61,47,0.14);
+    --sky:#4E8FC4;
+    --radius:12px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0; overflow-x:hidden; max-width:100%;}
+  body{
+    font-family:'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', system-ui, sans-serif;
+    color:var(--ink);
+    background-color:var(--paper);
+    background-image: repeating-linear-gradient(to bottom, transparent 0 27px, rgba(35,42,59,0.045) 27px 28px);
+    -webkit-font-smoothing:antialiased;
+  }
+  @page{ margin:14mm; }
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; animation:none !important; }
+  }
+  button, input{ font-family:inherit; }
+  button:focus-visible, input:focus-visible, label:focus-within{
+    outline:2px solid var(--stamp); outline-offset:2px;
+  }
+
+  .page-wrap{ max-width:980px; margin:0 auto; padding:28px 20px 60px; }
+
+  .app-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px; }
+  .app-header-brand{ display:flex; align-items:baseline; gap:10px; }
+  .app-header .brand-mark{ font-size:28px; }
+  .app-header h1{
+    font-family:'Jua', 'Noto Sans KR', sans-serif;
+    font-weight:400;
+    font-size:28px;
+    margin:0;
+    color:var(--ink);
+    letter-spacing:0.5px;
+  }
+  .tagline{
+    margin:2px 0 20px;
+    color:var(--ink-soft);
+    font-size:14px;
+  }
+  .settings-btn{
+    all:unset; cursor:pointer; font-size:13px; font-weight:700; color:var(--ink);
+    padding:8px 14px; border-radius:999px; border:1px solid var(--line); background:var(--card);
+    white-space:nowrap;
+  }
+  .settings-btn:hover{ background:var(--paper); }
+
+  /* ---------- Toolbar ---------- */
+  .toolbar{
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:12px;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:10px 14px;
+    margin-bottom:18px;
+  }
+  .view-tabs{ display:flex; gap:4px; background:var(--paper); padding:4px; border-radius:999px; flex-wrap:wrap; }
+  .tab{
+    all:unset; cursor:pointer;
+    padding:7px 16px; border-radius:999px;
+    font-size:14px; font-weight:700; color:var(--ink-soft);
+  }
+  .tab.active{ background:var(--stamp); color:#fff; }
+
+  .nav-controls{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; justify-content:center; }
+  .nav-controls button{
+    all:unset; cursor:pointer; width:30px; height:30px; text-align:center; line-height:30px;
+    border-radius:50%; color:var(--ink-soft); font-size:16px;
+  }
+  .nav-controls button:hover{ background:var(--paper); color:var(--ink); }
+  #periodLabel{
+    font-family:'Jua', sans-serif; font-size:17px; min-width:0; text-align:center; white-space:nowrap;
+  }
+  #todayBtn{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--sky);
+    padding:5px 10px; border:1px solid var(--sky); border-radius:999px;
+  }
+  #todayBtn:hover{ background:rgba(78,143,196,0.1); }
+  body.view-list .nav-controls{ display:none; }
+
+  /* ---------- List tab (all registered workbooks/classes) ---------- */
+  .list-grid{ display:flex; flex-direction:column; gap:10px; }
+  .list-section{ margin-bottom:22px; }
+  .list-section:last-child{ margin-bottom:0; }
+  .list-section-title{
+    display:flex; align-items:center; gap:8px; font-family:'Jua', sans-serif; font-weight:400;
+    font-size:16px; margin:0 0 10px; color:var(--ink);
+  }
+  .list-section-count{
+    font-family:'Noto Sans KR', sans-serif; font-size:11px; font-weight:700; color:var(--ink-soft);
+    background:var(--paper); border-radius:999px; padding:2px 9px;
+  }
+  .list-section-empty{ font-size:13px; color:var(--ink-soft); }
+  .list-card{
+    background:var(--card); border:1px solid var(--line); border-left:4px solid var(--chip-color);
+    border-radius:var(--radius); padding:14px 16px;
+  }
+  .list-card-head{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:4px; }
+  .list-card-head strong{ font-size:15px; }
+  .list-card-kind{
+    font-size:11px; font-weight:700; color:var(--ink-soft); background:var(--paper);
+    border-radius:999px; padding:2px 9px;
+  }
+  .list-card-meta{ font-size:12px; color:var(--ink-soft); margin-bottom:10px; }
+  .list-card-progress{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .progress-bar{ flex:1; min-width:120px; height:8px; border-radius:999px; background:var(--paper); overflow:hidden; }
+  .progress-fill{ height:100%; background:var(--chip-color); border-radius:999px; }
+  .list-card-progress span{ font-size:12px; color:var(--ink-soft); white-space:nowrap; }
+  .list-card-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .list-card-actions button{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--ink);
+    padding:6px 12px; border-radius:999px; border:1px solid var(--line);
+  }
+  .list-card-actions button:hover{ background:var(--paper); }
+
+  .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .actions button{
+    all:unset; cursor:pointer; font-size:13px; font-weight:700;
+    padding:8px 14px; border-radius:999px; border:1px solid var(--line);
+    color:var(--ink); white-space:nowrap;
+  }
+  .actions button:hover{ background:var(--paper); }
+  #printBtn{ border-color:var(--stamp); color:var(--stamp); }
+  #printBtn:hover{ background:var(--stamp-soft); }
+
+  /* ---------- Empty banner ---------- */
+  .empty-banner{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:#FFF7EC; border:1px dashed #E8A33D; border-radius:var(--radius);
+    padding:14px 16px; margin-bottom:18px; font-size:14px;
+  }
+  .empty-banner button{
+    all:unset; cursor:pointer; background:#E8A33D; color:#fff; font-weight:700;
+    padding:8px 14px; border-radius:999px; font-size:13px;
+  }
+
+  /* ---------- View header (title + legend), prints too ---------- */
+  .view-header{ margin-bottom:14px; }
+  .view-header h2{
+    font-family:'Jua', sans-serif; font-weight:400; font-size:22px; margin:0 0 8px;
+  }
+  .view-header-top{
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px 12px;
+  }
+  .view-header-top h2{ margin:0; }
+  .plan-tab{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--ink-soft);
+    padding:6px 12px; border-radius:999px; border:1px solid var(--line); background:var(--card);
+    white-space:nowrap;
+  }
+  .plan-tab:hover{ background:var(--paper); color:var(--ink); }
+  .plan-tab.active{ background:var(--stamp); border-color:var(--stamp); color:#fff; }
+
+  .month-note-display{
+    margin-top:8px; padding:10px 12px; background:#FFF7EC; border:1px dashed #E8A33D;
+    border-radius:10px; font-size:13px; color:var(--ink); white-space:pre-wrap; word-break:break-word;
+  }
+  .month-note-editor{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .month-note-editor textarea{
+    width:100%; min-height:80px; padding:10px; border-radius:10px; border:1px solid var(--line);
+    font-size:16px; font-family:inherit; color:var(--ink); background:var(--paper); resize:vertical;
+    box-sizing:border-box;
+  }
+  .month-note-editor .form-actions{ margin-top:0; }
+  .save-note-btn{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:#fff;
+    padding:6px 14px; border-radius:999px; background:var(--stamp);
+  }
+  .save-note-btn:hover{ opacity:0.9; }
+
+  .todo-add-row{ margin-top:10px; display:flex; gap:8px; }
+  .todo-add-row input[type="text"]{
+    flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:var(--paper);
+  }
+  .todo-add-row button{
+    all:unset; cursor:pointer; padding:9px 16px; border-radius:999px; background:var(--stamp);
+    color:#fff; font-weight:700; font-size:13px; white-space:nowrap;
+  }
+  .todo-add-row button:hover{ opacity:0.9; }
+  .todo-row .item-name{ font-weight:600; }
+  .todo-delete{
+    all:unset; cursor:pointer; margin-left:auto; padding:4px 8px; border-radius:50%;
+    color:var(--ink-soft); font-size:12px; flex:none;
+  }
+  .todo-delete:hover{ background:var(--stamp-soft); color:var(--stamp); }
+  .todo-section-label{ font-size:11px; font-weight:700; color:var(--ink-soft); margin:14px 0 6px; }
+
+  .routine-add-form{
+    margin-top:10px; padding:12px; background:var(--paper); border:1px solid var(--line);
+    border-radius:10px; display:flex; flex-direction:column; gap:8px;
+  }
+  .routine-add-form input[type="text"], .routine-add-form input[type="date"]{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:var(--card); box-sizing:border-box;
+  }
+  .routine-add-form .form-actions{ margin-top:0; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:8px 14px; }
+  .legend-item{
+    all:unset; display:flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-soft);
+  }
+  .legend-edit, .legend-edit-series{
+    cursor:pointer; padding:2px 6px; border-radius:999px; margin:-2px -6px;
+  }
+  .legend-edit:hover, .legend-edit-series:hover{ background:var(--paper); color:var(--ink); }
+  .legend-dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+
+  /* ---------- Month view ---------- */
+  .month-grid-wrap{ width:100%; overflow:hidden; }
+  .month-grid{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:4px; width:100%; }
+  .wd-head{
+    text-align:center; font-family:'Jua', sans-serif; font-size:13px; padding:6px 0;
+    color:var(--ink-soft);
+  }
+  .wd-head.sun{ color:var(--stamp); }
+  .wd-head.sat{ color:var(--sky); }
+  .cell{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:6px; min-height:96px; display:flex; flex-direction:column; gap:4px;
+    cursor:pointer;
+  }
+  .cell:hover{ background:#F5F8FB; }
+  .cell.blank{ background:transparent; border:none; cursor:default; }
+  .cell.blank:hover{ background:transparent; }
+  .cell.today{ border:2px solid var(--stamp); box-shadow:0 0 0 3px var(--stamp-soft); }
+  .cell-date{ font-weight:700; font-size:12px; color:var(--ink-soft); font-variant-numeric:tabular-nums; }
+  .cell.sun .cell-date{ color:var(--stamp); }
+  .cell.sat .cell-date{ color:var(--sky); }
+  .cell.today .cell-date{ color:var(--stamp); }
+  .cell.holiday .cell-date{ color:var(--stamp); }
+  .cell-items{ display:flex; flex-direction:column; gap:3px; }
+  .holiday-label{
+    font-size:9px; color:var(--stamp); font-weight:700; line-height:1.2;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:-2px;
+  }
+  .holiday-tag{
+    font-size:11px; font-weight:700; color:var(--stamp); background:var(--stamp-soft);
+    border-radius:999px; padding:2px 9px; margin-left:6px; vertical-align:middle;
+  }
+
+  .chip{
+    all:unset; cursor:pointer; display:flex; align-items:center; gap:5px;
+    font-size:11px; font-weight:500; padding:2px 7px; border-radius:999px;
+    background:var(--chip-bg); border:1px solid var(--chip-border);
+    max-width:100%;
+  }
+  .chip-text{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .chip-dot{ width:6px; height:6px; border-radius:50%; background:var(--chip-color); flex:none; }
+  .chip.done{ opacity:0.5; }
+  .chip.done .chip-text{ text-decoration:line-through; }
+  .draggable-chip{ cursor:grab; }
+  .draggable-chip:active{ cursor:grabbing; }
+  .chip.dragging{ opacity:0.35; }
+  .cell.drop-target{ box-shadow:inset 0 0 0 2px var(--sky); background:rgba(78,143,196,0.12); }
+
+  /* round number, always shown inside a circle badge */
+  .round-badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:16px; height:16px; padding:0 3px; border-radius:999px;
+    background:rgba(35,42,59,0.07); border:1px solid var(--chip-color);
+    font-size:10px; font-weight:700; color:var(--ink); flex:none;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* Events (appointments, vacations) render as a distinct banner, not a
+     checkbox chip — bolder background tint, no round badge, block layout. */
+  .event-banner{
+    all:unset; cursor:pointer; display:block; width:100%; box-sizing:border-box;
+    font-size:11px; font-weight:700; padding:3px 7px; border-radius:6px;
+    background:var(--chip-bg); border:1px solid var(--chip-border); color:var(--ink);
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-bottom:2px;
+  }
+  .event-banner.compact{ font-size:10px; padding:2px 6px; }
+  .event-banner-list{ display:flex; flex-direction:column; margin-bottom:2px; }
+
+  /* day view: ▲▼ reorder buttons */
+  .reorder-btns{ display:flex; flex-direction:column; gap:1px; margin-left:auto; flex:none; }
+  .reorder-btn{
+    all:unset; cursor:pointer; width:22px; height:15px; display:flex; align-items:center; justify-content:center;
+    font-size:9px; color:var(--ink-soft); border-radius:3px;
+  }
+  .reorder-btn:hover{ background:var(--paper); color:var(--ink); }
+  .event-banner-wrap{
+    display:flex; align-items:center; gap:4px; margin-bottom:4px; padding:2px 4px 2px 0;
+    background:var(--chip-bg); border:1px solid var(--chip-border); border-radius:6px;
+  }
+  .event-banner-wrap .event-banner.in-wrap{
+    flex:1; background:transparent; border:none; margin-bottom:0; white-space:normal;
+  }
+
+  /* ---------- Week view ---------- */
+  .week-grid-wrap{ width:100%; overflow:hidden; }
+  .week-grid{ display:grid; grid-template-columns:repeat(7, minmax(0,1fr)); gap:6px; align-items:start; }
+  .week-day{
+    background:var(--card); border:1px solid var(--line); border-radius:10px;
+    padding:8px 6px; display:flex; flex-direction:column; gap:6px; min-width:0;
+  }
+  .week-day.today{ border:2px solid var(--stamp); box-shadow:0 0 0 3px var(--stamp-soft); }
+  .week-day.holiday{ box-shadow:inset 0 0 0 1px var(--stamp); }
+  .week-day.sun .week-day-num{ color:var(--stamp); }
+  .week-day.sat .week-day-num{ color:var(--sky); }
+  .week-day h3{
+    margin:0; font-size:12px; font-weight:700; display:flex; flex-direction:column; gap:1px; cursor:pointer;
+  }
+  .week-day-num{
+    font-family:'Jua', sans-serif; font-weight:400; font-size:14px; color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  .week-day.today .week-day-num{ color:var(--stamp); }
+  .week-day-dow{ font-size:10px; font-weight:700; color:var(--ink-soft); }
+  .week-day h3 .holiday-label{ margin-top:1px; }
+  .item-list{ display:flex; flex-direction:column; gap:8px; }
+  .week-day .item-list{ gap:5px; }
+  .week-day .item-row{ padding:6px 7px; gap:6px; }
+  .week-day .stamp-box{ width:20px; height:20px; }
+  .week-day .item-name{ font-size:11px; white-space:normal; word-break:break-word; }
+  .week-day .item-round{ font-size:9px; }
+  .week-day .round-badge{ min-width:14px; height:14px; font-size:8.5px; }
+  .week-day .event-banner{ font-size:9.5px; padding:2px 5px; }
+  .week-day .muted{ font-size:11px; }
+
+  /* ---------- Item rows (shared: week + day) ---------- */
+  .item-row{
+    display:flex; align-items:center; gap:12px; cursor:pointer;
+    padding:10px 12px; background:var(--paper); border:1px solid var(--line); border-radius:10px;
+    transition:background .15s;
+  }
+  .item-row:hover{ background:#E4ECF4; }
+  .item-row.done{ background:#F1F4F1; }
+  .item-row.done .item-name{ text-decoration:line-through; color:var(--ink-soft); }
+  .item-row.done .item-round{ text-decoration:line-through; }
+  .item-row.no-check{ cursor:default; }
+  .item-row.no-check:hover{ background:var(--paper); }
+  .item-row.routine-row{ background:#EFEFEF; }
+  .item-row.routine-row:hover{ background:#E6E6E6; }
+  .item-row.routine-row.done{ background:#E4E4E4; }
+
+  /* day view: long-press multi-select */
+  [data-entry-key].day-selected{
+    box-shadow:0 0 0 2px var(--sky) inset; background:rgba(78,143,196,0.12) !important;
+  }
+  .event-banner-wrap.day-selected{ box-shadow:0 0 0 2px var(--sky) inset; }
+  .selection-toolbar{
+    position:fixed; left:50%; bottom:20px; transform:translateX(-50%);
+    background:var(--ink); color:#fff; padding:10px 14px; border-radius:999px;
+    display:flex; align-items:center; gap:10px; font-size:13px; font-weight:700;
+    box-shadow:0 8px 24px rgba(0,0,0,0.25); z-index:150; max-width:92vw; flex-wrap:wrap; justify-content:center;
+  }
+  .selection-toolbar button{
+    all:unset; cursor:pointer; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,0.15);
+    color:#fff; font-size:12px; font-weight:700; white-space:nowrap;
+  }
+  .selection-toolbar button:hover{ background:rgba(255,255,255,0.28); }
+  .stamp-box{
+    position:relative; width:28px; height:28px; border-radius:50%;
+    border:2px dashed var(--chip-color); flex:none;
+  }
+  .stamp-mark{
+    position:absolute; inset:3px; border-radius:48% 52% 51% 49% / 52% 48% 53% 47%;
+    background:var(--stamp); opacity:0.85; transform:rotate(-8deg);
+    box-shadow:0 0 0 3px rgba(198,61,47,0.12);
+  }
+  .item-text{ display:flex; flex-direction:column; gap:2px; }
+  .item-name{ font-weight:700; font-size:14px; }
+  .item-round{ display:flex; align-items:center; gap:5px; font-size:12px; color:var(--ink-soft); }
+  .item-round .round-badge{ width:18px; height:18px; font-size:11px; }
+
+  /* ---------- Day view ---------- */
+  .day-view .item-list.large .item-row{ padding:14px 16px; }
+  .day-view .item-list.large .stamp-box{ width:34px; height:34px; }
+  .day-view .item-list.large .item-name{ font-size:15px; }
+  .progress-note{
+    margin-top:14px; font-size:13px; color:var(--ink-soft); font-weight:700;
+  }
+  .day-nav-hint{ font-size:12px; color:var(--ink-soft); margin-top:2px; }
+
+  /* ---------- Empty state ---------- */
+  .empty-state{
+    text-align:center; padding:56px 20px; color:var(--ink-soft);
+    background:var(--card); border:1px dashed var(--line); border-radius:var(--radius);
+    font-size:15px; line-height:1.8;
+  }
+  .empty-state span{ font-size:13px; }
+
+  /* ---------- Modal ---------- */
+  .modal{
+    position:fixed; inset:0; background:rgba(35,42,59,0.45);
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:40px 16px; overflow-y:auto; z-index:50;
+  }
+  .modal.hidden{ display:none; }
+  .modal-card{
+    background:var(--card); border-radius:16px; padding:22px 24px 26px;
+    width:100%; max-width:460px;
+  }
+  .modal-card h2{ font-family:'Jua', sans-serif; font-weight:400; font-size:20px; margin:0 0 14px; }
+  .modal-list-tabs{
+    display:flex; gap:4px; background:var(--paper); padding:4px; border-radius:999px; margin-bottom:12px;
+  }
+  .modal-list-tab{
+    all:unset; cursor:pointer; flex:1; text-align:center; padding:7px 8px; border-radius:999px;
+    font-size:12px; font-weight:700; color:var(--ink-soft);
+  }
+  .modal-list-tab.active{ background:var(--stamp); color:#fff; }
+  .wb-item{
+    display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .wb-color{ width:12px; height:12px; border-radius:50%; flex:none; }
+  .wb-info{ flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+  .wb-info strong{ font-size:14px; }
+  .wb-info span{ font-size:12px; color:var(--ink-soft); }
+  .wb-actions{ display:flex; gap:6px; flex:none; flex-wrap:wrap; max-width:100%; }
+  .wb-actions button{
+    all:unset; cursor:pointer; font-size:12px; padding:4px 9px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-soft);
+  }
+  .wb-actions button:hover{ background:var(--paper); }
+  .muted{ color:var(--ink-soft); font-size:13px; }
+
+  #settingsForm{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+  #settingsForm input[type="text"], #settingsForm input[type="date"]{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:var(--paper); box-sizing:border-box;
+  }
+  #workbookForm{ margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+  #workbookForm .field-label, #settingsForm .field-label{ font-size:12px; font-weight:700; color:var(--ink-soft); margin-bottom:-4px; }
+  #workbookForm input[type="text"], #workbookForm input[type="number"], #workbookForm input[type="date"], #workbookForm input[type="time"]{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:var(--paper);
+  }
+  #workbookForm textarea{
+    width:100%; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:var(--paper); resize:vertical;
+    font-family:inherit; box-sizing:border-box;
+  }
+  .memo-hint{ font-weight:400; color:var(--ink-soft); text-transform:none; letter-spacing:0; }
+  .color-picker{ display:flex; gap:8px; flex-wrap:wrap; }
+  .swatch{
+    all:unset; cursor:pointer; width:26px; height:26px; border-radius:50%;
+    box-shadow:0 0 0 2px transparent;
+  }
+  .swatch.selected{ box-shadow:0 0 0 2px #fff, 0 0 0 4px var(--ink); }
+  .weekday-picker{ display:flex; gap:6px; flex-wrap:wrap; }
+  .wd-chip{ cursor:pointer; }
+  .wd-chip input{ display:none; }
+  .wd-chip span{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:34px; height:34px; border-radius:50%; border:1px solid var(--line);
+    font-size:13px; color:var(--ink-soft); background:var(--paper);
+  }
+  .wd-chip input:checked + span{ background:var(--stamp); border-color:var(--stamp); color:#fff; font-weight:700; }
+
+  .kind-picker{ display:flex; gap:8px; }
+  .kind-btn{
+    all:unset; cursor:pointer; flex:1; text-align:center; padding:9px 10px; border-radius:10px;
+    border:1px solid var(--line); font-size:13px; font-weight:700; color:var(--ink-soft); background:var(--paper);
+  }
+  .kind-btn.selected{ background:var(--stamp); border-color:var(--stamp); color:#fff; }
+
+  .weekly-time-block{ display:flex; flex-direction:column; gap:6px; }
+  .all-day-toggle{
+    display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink);
+    margin-top:10px; cursor:pointer;
+  }
+  .all-day-toggle input{ width:16px; height:16px; accent-color:var(--stamp); }
+  .weekly-time-label{ font-size:11px; font-weight:700; color:var(--ink-soft); }
+  .time-select-group{ display:flex; gap:6px; }
+  .time-select-group select{
+    flex:1; min-width:0; padding:8px 4px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:#fff;
+  }
+
+  .segment-hint{ font-size:11px; color:var(--ink-soft); margin:0 0 6px; }
+  .segment-row{
+    border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; background:var(--paper);
+  }
+  .segment-row-top{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .segment-row-top input[type="date"]{ flex:1; }
+  .remove-segment{
+    all:unset; cursor:pointer; width:26px; height:26px; border-radius:50%; text-align:center; line-height:26px;
+    color:var(--ink-soft); border:1px solid var(--line); flex:none;
+  }
+  .remove-segment:hover{ background:#fff; color:var(--stamp); }
+  #addSegmentBtn{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--sky);
+    padding:6px 10px; border:1px dashed var(--sky); border-radius:999px; display:inline-block;
+  }
+
+  .weekly-row{
+    border:1px solid var(--line); border-radius:10px; padding:10px; margin-bottom:8px; background:var(--paper);
+  }
+  .weekly-row-top{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+  .weekly-row-top select{
+    flex:1; padding:9px 10px; border-radius:8px; border:1px solid var(--line);
+    font-size:16px; color:var(--ink); background:#fff;
+  }
+  .remove-weekly{
+    all:unset; cursor:pointer; width:26px; height:26px; border-radius:50%; text-align:center; line-height:26px;
+    color:var(--ink-soft); border:1px solid var(--line); flex:none;
+  }
+  .remove-weekly:hover{ background:#fff; color:var(--stamp); }
+  #addWeeklyRowBtn{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--sky);
+    padding:6px 10px; border:1px dashed var(--sky); border-radius:999px; display:inline-block;
+  }
+
+  .form-actions{ display:flex; gap:8px; margin-top:4px; flex-wrap:wrap; }
+  #submitWbBtn{
+    all:unset; cursor:pointer; flex:1; text-align:center; background:var(--stamp); color:#fff;
+    font-weight:700; padding:10px; border-radius:999px; font-size:14px;
+  }
+  #cancelEditBtn{
+    all:unset; cursor:pointer; display:none; padding:10px 14px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-soft); font-size:13px;
+  }
+  #submitProfileBtn{
+    all:unset; cursor:pointer; flex:1; text-align:center; background:var(--stamp); color:#fff;
+    font-weight:700; padding:10px; border-radius:999px; font-size:14px;
+  }
+  #cancelProfileEditBtn{
+    all:unset; cursor:pointer; padding:10px 14px; border-radius:999px;
+    border:1px solid var(--line); color:var(--ink-soft); font-size:13px;
+  }
+  #closeManage{
+    all:unset; cursor:pointer; display:block; margin:18px auto 0; font-size:13px;
+    color:var(--ink-soft); text-decoration:underline;
+  }
+
+  .save-status{
+    font-size:11px; color:var(--ink-soft); padding:0 2px; max-width:100%;
+  }
+
+  .page-footer{
+    margin-top:28px; padding-top:18px; border-top:1px solid var(--line);
+  }
+  .backup-row{
+    display:flex; gap:8px; flex-wrap:wrap; margin:0;
+  }
+  .backup-row button{
+    all:unset; cursor:pointer; font-size:12px; font-weight:700; color:var(--ink);
+    padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:var(--card);
+  }
+  .backup-row button:hover{ background:var(--paper); }
+  .backup-hint{ font-size:11px; color:var(--ink-soft); margin:8px 0 0; }
+
+  .toast{
+    position:fixed; left:50%; bottom:24px; transform:translateX(-50%) translateY(12px);
+    background:var(--ink); color:#fff; padding:10px 20px; border-radius:999px;
+    font-size:13px; font-weight:700; opacity:0; pointer-events:none;
+    transition:opacity .2s, transform .2s; z-index:100; box-shadow:0 6px 18px rgba(0,0,0,0.18);
+    max-width:90vw; text-align:center;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .context-menu{
+    position:fixed; z-index:200; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; box-shadow:0 8px 24px rgba(35,42,59,0.2); padding:6px;
+    display:flex; flex-direction:column; gap:2px; min-width:160px;
+  }
+  .context-menu.hidden{ display:none; }
+  .context-menu button{
+    all:unset; cursor:pointer; padding:9px 12px; border-radius:7px; font-size:13px;
+    color:var(--ink); white-space:nowrap;
+  }
+  .context-menu button:hover{ background:var(--paper); }
+  .ctx-danger{ color:var(--stamp); border-top:1px solid var(--line); margin-top:2px; padding-top:11px !important; }
+  .ctx-danger:hover{ background:var(--stamp-soft); }
+  @media print{ .context-menu{ display:none !important; } .selection-toolbar{ display:none !important; } }
+
+  /* ---------- Print ---------- */
+  @media print{
+    body{ background:#fff; background-image:none; }
+    .toolbar, .empty-banner, .modal, .tagline, .page-footer, .settings-btn{ display:none !important; }
+    .page-wrap{ padding:0; max-width:none; }
+    .cell, .item-row, .week-day{ break-inside:avoid; }
+    .cell:hover, .item-row:hover{ background:inherit; transform:none; box-shadow:none; }
+  }
+
+  @media (max-width:640px){
+    .app-header h1{ font-size:23px; }
+    .toolbar{ flex-direction:column; align-items:stretch; }
+    .view-tabs{ justify-content:center; }
+    .nav-controls{ justify-content:center; }
+    .actions{ justify-content:center; }
+    .save-status{ flex-basis:100%; text-align:center; }
+    .page-wrap{ padding-left:10px; padding-right:10px; }
+    .month-grid{ gap:3px; }
+    .cell{ min-height:74px; padding:4px 3px; border-radius:8px; }
+    .cell-date{ font-size:11px; }
+    .chip{ font-size:9.5px; padding:2px 5px; gap:3px; }
+    .chip-dot{ width:5px; height:5px; }
+    .round-badge{ min-width:14px; height:14px; font-size:8.5px; }
+    .wd-head{ font-size:11px; padding:4px 0; }
+    .holiday-label{ font-size:7.5px; }
+    .event-banner{ font-size:9.5px; padding:2px 5px; }
+    .week-grid{ gap:3px; }
+    .week-day{ padding:5px 3px; gap:4px; }
+    .week-day-num{ font-size:12px; }
+    .week-day-dow{ font-size:8.5px; }
+    .week-day .item-row{ padding:4px 5px; gap:4px; }
+    .week-day .stamp-box{ width:16px; height:16px; }
+    .week-day .item-name{ font-size:9.5px; }
+    .week-day .item-round{ font-size:8px; }
+  }
+  @media (max-width:400px){
+    .cell{ min-height:60px; padding:3px 2px; }
+    .cell-date{ font-size:10px; }
+    .chip{ font-size:8.5px; padding:1px 4px; }
+    .round-badge{ min-width:12px; height:12px; font-size:7.5px; }
+    .wd-head{ font-size:10px; }
+    .week-day{ padding:4px 2px; }
+    .week-day-num{ font-size:10.5px; }
+    .week-day-dow{ font-size:7.5px; }
+    .week-day .item-name{ font-size:8.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <header class="app-header">
+    <div class="app-header-brand">
+      <span class="brand-mark">📘</span>
+      <h1 id="appTitle">Study Planner</h1>
+    </div>
+    <button type="button" id="settingsBtn" class="settings-btn" aria-label="사용자 설정">⚙️ 설정</button>
+  </header>
+  <p class="tagline">문제집·학원 클래스·약속이나 여행 같은 일정을 등록하면, 날짜별 계획을 자동으로 만들어 드려요.</p>
+
+  <div class="toolbar">
+    <div class="view-tabs">
+      <button class="tab active" data-view="month">월별</button>
+      <button class="tab" data-view="week">주별</button>
+      <button class="tab" data-view="day">일별</button>
+      <button class="tab" data-view="list">목록</button>
+    </div>
+    <div class="nav-controls">
+      <button id="prevBtn" aria-label="이전">‹</button>
+      <span id="periodLabel"></span>
+      <button id="nextBtn" aria-label="다음">›</button>
+      <button id="todayBtn">오늘</button>
+    </div>
+    <div class="actions">
+      <span id="saveStatus" class="save-status"></span>
+      <button id="manageBtn">📚 문제집·클래스·일정 관리</button>
+      <button id="printBtn">🖨 인쇄 · PDF 저장</button>
+    </div>
+  </div>
+
+  <div id="emptyBanner" class="empty-banner" style="display:none;">
+    <span>아직 등록된 문제집·클래스·일정이 없어요. 등록하면 계획이 자동으로 채워져요.</span>
+    <button id="emptyBannerBtn">등록하기</button>
+  </div>
+
+  <main id="viewContainer"></main>
+
+  <footer class="page-footer">
+    <div class="backup-row">
+      <button type="button" id="exportBtn">💾 백업 파일로 저장</button>
+      <button type="button" id="importBtn">📂 백업 파일 불러오기</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+    <p class="backup-hint">기기·브라우저에 자동 저장돼요. 다른 기기로 옮기거나 안전하게 보관하려면 백업 파일을 내려받아두세요. (문제집·클래스·일정과 사용자 설정이 모두 포함돼요)</p>
+  </footer>
+
+  <div id="contextMenu" class="context-menu hidden">
+    <button type="button" id="ctxEdit">✏️ 수정하기</button>
+    <button type="button" id="ctxEditDay" style="display:none;">📌 해당일만 수정하기</button>
+    <button type="button" id="ctxPostpone">⏭ 1회차 미루기</button>
+    <button type="button" id="ctxDelete" class="ctx-danger">🗑 지우기</button>
+    <button type="button" id="ctxDeleteAll" class="ctx-danger">🗑 전체 지우기</button>
+  </div>
+
+</div>
+
+<div id="settingsModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>⚙️ 사용자 설정</h2>
+    <p class="segment-hint">여러 명을 등록할 수 있어요. "활성으로" 지정한 사용자의 이름이 화면 제목에 표시돼요.</p>
+    <div id="userProfileList"></div>
+    <form id="settingsForm">
+      <div>
+        <div class="field-label">이름</div>
+        <input type="text" name="userName" placeholder="예: Spring" required maxlength="20">
+      </div>
+      <div>
+        <div class="field-label">생년월일</div>
+        <input type="date" name="userBirth" required>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancelProfileEditBtn" style="display:none;">취소</button>
+        <button type="submit" id="submitProfileBtn">추가하기</button>
+      </div>
+    </form>
+    <button id="closeSettings">닫기</button>
+  </div>
+</div>
+
+<div id="manageModal" class="modal hidden">
+  <div class="modal-card">
+    <h2>📚 문제집·클래스·일정 관리</h2>
+    <div class="modal-list-tabs" id="modalListTabs">
+      <button type="button" class="modal-list-tab active" data-kind="book">📘 문제집</button>
+      <button type="button" class="modal-list-tab" data-kind="class">🏫 클래스</button>
+      <button type="button" class="modal-list-tab" data-kind="event">🗓️ 일정</button>
+    </div>
+    <div id="workbookList"></div>
+
+    <form id="workbookForm">
+      <div>
+        <div class="field-label">구분</div>
+        <div class="kind-picker" id="kindPicker">
+          <button type="button" class="kind-btn" data-kind="book">📘 문제집</button>
+          <button type="button" class="kind-btn" data-kind="class">🏫 클래스</button>
+          <button type="button" class="kind-btn" data-kind="event">🗓️ 일정</button>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">이름</div>
+        <input type="text" name="name" placeholder="예: 수학 연산 문제집" required maxlength="30">
+      </div>
+      <div>
+        <div class="field-label">색상</div>
+        <div class="color-picker" id="colorPicker"></div>
+      </div>
+      <div id="roundsField">
+        <div class="field-label">총 회차 수 <span class="memo-hint">(비워두면 종료일로 계획해요)</span></div>
+        <input type="number" name="totalRounds" placeholder="예: 30 (비워두면 종료일 사용)" min="1" max="500">
+      </div>
+      <div id="bookEndDateField" style="display:none;">
+        <div class="field-label">종료일</div>
+        <input type="date" name="bookEndDate">
+        <p class="segment-hint">총 회차 수를 입력하지 않으면, 이 날짜까지 요일 패턴대로 계속 진행돼요.</p>
+      </div>
+      <div id="bookSegmentsField">
+        <div class="field-label">공부 기간 · 요일</div>
+        <p class="segment-hint">중간에 요일이 바뀌는 시점이 있다면 구간을 나눠 추가하세요. 각 구간은 시작일부터 다음 구간 시작 전날까지(마지막 구간은 끝까지) 적용돼요. 요일을 하나도 선택하지 않은 구간은 쉬는 기간(공백)이 돼요.</p>
+        <div id="segmentList"></div>
+        <button type="button" id="addSegmentBtn">+ 구간 추가</button>
+      </div>
+      <div id="classFields" style="display:none;">
+        <div class="field-label">시작일</div>
+        <input type="date" name="classStartDate">
+        <div class="field-label" style="margin-top:8px;">종료일</div>
+        <input type="date" name="classEndDate">
+        <div class="field-label" style="margin-top:8px;">요일별 수업 시간</div>
+        <p class="segment-hint">요일마다 시간이 다르면 요일을 각각 추가하세요.</p>
+        <div id="weeklyScheduleList"></div>
+        <button type="button" id="addWeeklyRowBtn">+ 요일 추가</button>
+      </div>
+      <div id="eventFields" style="display:none;">
+        <div class="field-label">일정 유형</div>
+        <div class="kind-picker" id="eventTypePicker">
+          <button type="button" class="kind-btn" data-type="single">🕐 1회성</button>
+          <button type="button" class="kind-btn" data-type="range">📅 기간</button>
+        </div>
+        <p class="segment-hint" id="eventTypeHint">하루짜리 일정이에요. 시간을 지정할 수 있어요.</p>
+        <div class="field-label" id="eventStartDateLabel">날짜</div>
+        <input type="date" name="eventStartDate">
+        <div id="eventEndDateField" style="display:none;">
+          <div class="field-label" style="margin-top:8px;">종료일</div>
+          <input type="date" name="eventEndDate">
+        </div>
+        <div id="eventTimeSection">
+          <label class="all-day-toggle">
+            <input type="checkbox" name="eventAllDay" checked> 하루 종일 (시간 지정 안 함)
+          </label>
+          <div id="eventTimeFields" style="display:none;">
+            <div class="field-label">시작 시간</div>
+            <div id="eventStartTimeGroup"></div>
+            <div class="field-label" style="margin-top:8px;">종료 시간</div>
+            <div id="eventEndTimeGroup"></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="field-label">메모 <span class="memo-hint">(선택 · 달력에서 마우스를 올리면 보여요)</span></div>
+        <textarea name="memo" rows="2" maxlength="200" placeholder="예: 준비물, 특이사항 등"></textarea>
+      </div>
+      <div class="form-actions">
+        <button type="button" id="cancelEditBtn">취소</button>
+        <button type="submit" id="submitWbBtn">추가하기</button>
+      </div>
+    </form>
+
+    <button id="closeManage">닫기</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var COLORS = [
+    '#3D9A8B', // teal
+    '#E8A33D', // mustard
+    '#8B7EC8', // lavender
+    '#4E8FC4', // sky blue
+    '#D46A85', // rose
+    '#6FA85E', // moss green
+    '#C9944A', // tan / ochre
+    '#5C8AA6', // slate blue
+    '#C85A4A', // terracotta red
+    '#4AACAA', // turquoise
+    '#A16BC9', // violet
+    '#5271C4', // indigo
+    '#B0A03D', // olive gold
+    '#4F8F5B', // forest green
+    '#C9678F', // magenta pink
+    '#7A8CA0', // cool grey-blue
+    '#D98F4E', // amber orange
+    '#6B9BC9', // powder blue
+    '#9C5C8C', // plum
+    '#7FA84A'  // olive green
+  ];
+  var WEEKDAY_NAMES = ['일','월','화','수','목','금','토'];
+
+  // Korean public holidays (관공서 공휴일), including 대체공휴일. Lunar-based
+  // holidays (설날, 추석, 부처님오신날) move every year and can't be computed
+  // algorithmically without a lunar calendar, so this is a hardcoded lookup
+  // covering 2025-2027. Purely informational — not editable, not a workbook.
+  var KOREAN_HOLIDAYS = {
+    // 2025
+    '2025-01-01': '신정',
+    '2025-01-27': '임시공휴일',
+    '2025-01-28': '설날 연휴',
+    '2025-01-29': '설날',
+    '2025-01-30': '설날 연휴',
+    '2025-03-01': '삼일절',
+    '2025-03-03': '대체공휴일(삼일절)',
+    '2025-05-05': '어린이날·부처님오신날',
+    '2025-05-06': '대체공휴일',
+    '2025-06-03': '임시공휴일(대통령선거일)',
+    '2025-06-06': '현충일',
+    '2025-08-15': '광복절',
+    '2025-10-03': '개천절',
+    '2025-10-06': '추석 연휴',
+    '2025-10-07': '추석',
+    '2025-10-08': '대체공휴일(추석)',
+    '2025-10-09': '한글날',
+    '2025-12-25': '성탄절',
+    // 2026
+    '2026-01-01': '신정',
+    '2026-02-16': '설날 연휴',
+    '2026-02-17': '설날',
+    '2026-02-18': '설날 연휴',
+    '2026-03-01': '삼일절',
+    '2026-03-02': '대체공휴일(삼일절)',
+    '2026-05-05': '어린이날',
+    '2026-05-24': '부처님오신날',
+    '2026-05-25': '대체공휴일(부처님오신날)',
+    '2026-06-03': '전국동시지방선거일',
+    '2026-06-06': '현충일',
+    '2026-07-17': '제헌절',
+    '2026-08-15': '광복절',
+    '2026-08-17': '대체공휴일(광복절)',
+    '2026-09-24': '추석 연휴',
+    '2026-09-25': '추석',
+    '2026-09-26': '추석 연휴',
+    '2026-10-03': '개천절',
+    '2026-10-05': '대체공휴일(개천절)',
+    '2026-10-09': '한글날',
+    '2026-12-25': '성탄절',
+    // 2027
+    '2027-01-01': '신정',
+    '2027-02-06': '설날 연휴',
+    '2027-02-07': '설날',
+    '2027-02-08': '설날 연휴',
+    '2027-02-09': '대체공휴일(설날)',
+    '2027-03-01': '삼일절',
+    '2027-05-05': '어린이날',
+    '2027-05-13': '부처님오신날',
+    '2027-06-06': '현충일',
+    '2027-07-17': '제헌절',
+    '2027-07-19': '대체공휴일(제헌절)',
+    '2027-08-15': '광복절',
+    '2027-08-16': '대체공휴일(광복절)',
+    '2027-09-14': '추석 연휴',
+    '2027-09-15': '추석',
+    '2027-09-16': '추석 연휴',
+    '2027-10-03': '개천절',
+    '2027-10-04': '대체공휴일(개천절)',
+    '2027-10-09': '한글날',
+    '2027-10-11': '대체공휴일(한글날)',
+    '2027-12-25': '성탄절',
+    '2027-12-27': '대체공휴일(성탄절)'
+  };
+
+  var workbooks = [];
+  var completed = {}; // key: `${iso}|${workbookId}|${round}` -> true
+  var monthNotes = {}; // key: 'YYYY-MM' -> free-text note
+  var dayTodos = {}; // key: 'YYYY-MM-DD' -> [{id, text, done}, ...]
+  var dayOrder = {}; // key: 'YYYY-MM-DD' -> [itemKey, ...] custom display order for that day
+  var routines = []; // [{id, name, daysOfWeek, startDate, endDate}, ...] — day-view only, repeats by weekday
+  var routineCompleted = {}; // key: `${iso}|${routineId}` -> true
+  var userProfiles = []; // [{ id, name, birth }, ...]
+  var activeUserId = null;
+  var editingProfileId = null;
+  var currentView = 'month';
+  var currentDate = new Date();
+  var editingId = null;
+
+  // ---------- date helpers ----------
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function toISO(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
+  function monthKeyOf(year, month){ return year + '-' + pad(month+1); }
+  function fromISO(iso){ return new Date(iso+'T00:00:00'); }
+  function addDays(d,n){ var r = new Date(d); r.setDate(r.getDate()+n); return r; }
+  function addMonths(d,n){ var r = new Date(d); r.setMonth(r.getMonth()+n); return r; }
+  function startOfWeek(d){ var r = new Date(d); r.setDate(r.getDate()-r.getDay()); return r; }
+  function escapeHTML(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+  function hexToRgba(hex, alpha){
+    var h = hex.replace('#','');
+    var r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+    return 'rgba('+r+','+g+','+b+','+alpha+')';
+  }
+  // Upgrades older saved data to the current schema. Books use a sorted list
+  // of {startDate, daysOfWeek} segments (weekdays can change mid-series) plus
+  // totalRounds. Classes use a single startDate/endDate range plus a
+  // weeklySchedule: one {day, start, end} entry per weekday, since a class's
+  // time can differ by day of the week. Events (appointments, vacations) use
+  // a single startDate/endDate range plus an optional single time. Safe to
+  // run on already-current data.
+  function normalizeWorkbooks(list){
+    return (list || []).map(function(wb){
+      if(!wb.kind) wb.kind = 'book';
+      if(typeof wb.memo !== 'string') wb.memo = '';
+      if(wb.kind === 'event'){
+        if(!wb.startDate) wb.startDate = toISO(new Date());
+        if(!wb.endDate) wb.endDate = wb.startDate;
+        if(wb.endDate < wb.startDate) wb.endDate = wb.startDate;
+        delete wb.totalRounds;
+        delete wb.segments;
+        delete wb.weeklySchedule;
+        delete wb.daysOfWeek;
+      } else if(wb.kind === 'class'){
+        if(!wb.weeklySchedule || !wb.weeklySchedule.length){
+          var legacyDays = (wb.segments && wb.segments.length) ? wb.segments[wb.segments.length-1].daysOfWeek : (wb.daysOfWeek || []);
+          if(!legacyDays || !legacyDays.length) legacyDays = [1];
+          var legacyStart = (wb.classTime && wb.classTime.start) || '16:00';
+          var legacyEnd = (wb.classTime && wb.classTime.end) || null;
+          wb.weeklySchedule = legacyDays.map(function(d){ return { day: d, start: legacyStart, end: legacyEnd }; });
+        }
+        if(!wb.startDate){
+          wb.startDate = (wb.segments && wb.segments.length) ? wb.segments[0].startDate : toISO(new Date());
+        }
+        if(!wb.endDate){
+          wb.endDate = toISO(addDays(fromISO(wb.startDate), 180));
+        }
+        delete wb.totalRounds;
+        delete wb.classTime;
+        delete wb.segments;
+        delete wb.daysOfWeek;
+      } else {
+        // book: always weekday/segments-based. totalRounds is optional — if
+        // omitted, wb.endDate bounds the schedule by date instead of count.
+        if(wb.planMode === 'dateRange'){
+          // Migrates the short-lived "auto-distribute over a date range" mode
+          // (since removed) to an approximate every-day weekday segment,
+          // bounded the same way it was before (rounds or end date).
+          wb.segments = [{ startDate: wb.startDate || toISO(new Date()), daysOfWeek: [0,1,2,3,4,5,6] }];
+        }
+        delete wb.planMode;
+        delete wb.startDate;
+        if(!wb.segments || !wb.segments.length){
+          wb.segments = [{ startDate: toISO(new Date()), daysOfWeek: wb.daysOfWeek || [] }];
+        }
+        wb.segments.sort(function(a,b){ return a.startDate < b.startDate ? -1 : (a.startDate > b.startDate ? 1 : 0); });
+        if(wb.totalRounds && wb.totalRounds > 0){
+          wb.totalRounds = Math.floor(wb.totalRounds);
+          delete wb.endDate;
+        } else {
+          delete wb.totalRounds;
+          if(!wb.endDate){
+            // No valid bound present (shouldn't normally happen) — fall back
+            // to a modest default so the schedule doesn't run forever.
+            wb.endDate = toISO(addDays(fromISO(wb.segments[0].startDate), 90));
+          }
+        }
+        delete wb.classTime;
+        delete wb.weeklySchedule;
+        delete wb.daysOfWeek;
+      }
+      return wb;
+    });
+  }
+  // Finds the daysOfWeek that apply on a given date: the latest segment whose
+  // startDate is on or before that date. Segments must already be sorted.
+  // (Books only — classes use weeklySchedule instead.)
+  function segmentDaysForDate(segments, dateObj){
+    var result = segments[0].daysOfWeek;
+    for(var i=1;i<segments.length;i++){
+      if(fromISO(segments[i].startDate) <= dateObj) result = segments[i].daysOfWeek;
+      else break;
+    }
+    return result;
+  }
+  // If this workbook has a drag-and-dropped override for this exact
+  // original date, returns the overridden Date instead — used so dragging a
+  // chip to a different day reschedules just that one occurrence.
+  function resolveOverrideDate(wb, cursor){
+    var overrides = wb.dateOverrides;
+    if(!overrides) return cursor;
+    var target = overrides[toISO(cursor)];
+    return target ? fromISO(target) : cursor;
+  }
+  // Walks every date an item (workbook, class, or event) actually occurs on,
+  // calling back(dateObj, occurrenceNumber, timeEntry) for each match.
+  // timeEntry is null for books, {start,end} for classes (taken from
+  // whichever weeklySchedule entry matches that date's weekday), and
+  // {start,end} or null for events (a single fixed time, or none for an
+  // all-day event). Books stop once occurrenceNumber passes totalRounds (if
+  // set) or once the date passes endDate (if totalRounds was left blank);
+  // classes and events always stop once the date passes their endDate.
+  function iterateWorkbookOccurrences(wb, callback){
+    var skipDates = wb.skipDates || [];
+    if(wb.kind === 'event'){
+      if(!wb.startDate || !wb.endDate) return;
+      var evCursor = fromISO(wb.startDate);
+      var evEndCursor = fromISO(wb.endDate);
+      var evOccurrence = 1;
+      var evGuard = 0;
+      while(evCursor <= evEndCursor && evGuard < 4000){
+        evGuard++;
+        if(skipDates.indexOf(toISO(evCursor)) === -1){
+          callback(evCursor, evOccurrence, wb.startTime ? { start: wb.startTime, end: wb.endTime || null } : null);
+          evOccurrence++;
+        }
+        evCursor.setDate(evCursor.getDate()+1);
+      }
+    } else if(wb.kind === 'class'){
+      if(!wb.startDate || !wb.endDate || !wb.weeklySchedule || !wb.weeklySchedule.length) return;
+      var cursor = fromISO(wb.startDate);
+      var endCursor = fromISO(wb.endDate);
+      var occurrence = 1;
+      var guard = 0;
+      while(cursor <= endCursor && guard < 4000){
+        guard++;
+        var dow = cursor.getDay();
+        if(skipDates.indexOf(toISO(cursor)) === -1){
+          for(var i=0;i<wb.weeklySchedule.length;i++){
+            if(wb.weeklySchedule[i].day === dow){
+              callback(cursor, occurrence, wb.weeklySchedule[i]);
+              occurrence++;
+            }
+          }
+        }
+        cursor.setDate(cursor.getDate()+1);
+      }
+    } else {
+      // book, weekday-based segments, bounded by totalRounds (if set) or
+      // by endDate (if totalRounds was left blank).
+      var segments = wb.segments;
+      if(!segments || !segments.length) return;
+      var bookCursor = fromISO(segments[0].startDate);
+      var round = 1;
+      var bookGuard = 0;
+      var boundByRounds = !!wb.totalRounds;
+      var bookEndCursor = (!boundByRounds && wb.endDate) ? fromISO(wb.endDate) : null;
+      while(bookGuard < 4000){
+        if(boundByRounds && round > wb.totalRounds) break;
+        if(bookEndCursor && bookCursor > bookEndCursor) break;
+        bookGuard++;
+        var days = segmentDaysForDate(segments, bookCursor);
+        if(days.indexOf(bookCursor.getDay()) !== -1 && skipDates.indexOf(toISO(bookCursor)) === -1){
+          callback(resolveOverrideDate(wb, bookCursor), round, null);
+          round++;
+        }
+        bookCursor.setDate(bookCursor.getDate()+1);
+      }
+    }
+  }
+
+  // ---------- storage ----------
+  // window.storage only exists inside the Claude.ai artifact viewer. If this
+  // file is saved and opened on its own (e.g. as a phone home-screen app),
+  // that API isn't there — so we fall back to the browser's own localStorage,
+  // which works normally for any page opened outside Claude.ai. This is what
+  // actually fixes "my entries disappear on my phone": previously, opening
+  // the file outside Claude.ai silently skipped saving entirely.
+  var STORAGE_AVAILABLE = !!(window.storage &&
+    typeof window.storage.get === 'function' &&
+    typeof window.storage.set === 'function');
+  var LOCAL_STORAGE_AVAILABLE = (function(){
+    try {
+      var testKey = '__sp_probe__';
+      window.localStorage.setItem(testKey, '1');
+      window.localStorage.removeItem(testKey);
+      return true;
+    } catch(e){ return false; }
+  })();
+  function storageGet(key){
+    if(STORAGE_AVAILABLE) return window.storage.get(key);
+    if(LOCAL_STORAGE_AVAILABLE){
+      var raw;
+      try { raw = window.localStorage.getItem('sp_' + key); }
+      catch(e){ return Promise.resolve(null); }
+      return Promise.resolve(raw !== null ? { key: key, value: raw } : null);
+    }
+    return Promise.resolve(null);
+  }
+  function storageSet(key, value){
+    if(STORAGE_AVAILABLE) return window.storage.set(key, value);
+    if(LOCAL_STORAGE_AVAILABLE){
+      try {
+        window.localStorage.setItem('sp_' + key, value);
+        return Promise.resolve({ key: key, value: value });
+      } catch(e){ return Promise.reject(e); }
+    }
+    return Promise.reject(new Error('no storage available'));
+  }
+
+  function setSaveStatus(state){
+    var el = document.getElementById('saveStatus');
+    if(!el) return;
+    if(state === 'saving') el.textContent = '⏳ 저장 중…';
+    else if(state === 'saved'){
+      var t = new Date();
+      el.textContent = '✅ 저장됨 · ' + pad(t.getHours()) + ':' + pad(t.getMinutes());
+    } else if(state === 'error') el.textContent = '⚠️ 자동 저장 실패 · 백업 파일을 이용해주세요';
+    else if(state === 'unavailable') el.textContent = '⚠️ 이 브라우저에서는 저장이 지원되지 않아요 · 백업 파일로 저장해주세요';
+    else el.textContent = '';
+  }
+
+  // Everything lives under one key so load/save is a single round trip
+  // (much faster than separate calls for workbooks + completion state).
+  function loadData(){
+    if(!STORAGE_AVAILABLE && !LOCAL_STORAGE_AVAILABLE){
+      setSaveStatus('unavailable');
+      return Promise.resolve();
+    }
+    return storageGet('app_data').then(function(r){
+      var data = r ? JSON.parse(r.value) : null;
+      if(data){
+        workbooks = normalizeWorkbooks(data.workbooks || []);
+        completed = data.completed || {};
+        monthNotes = data.monthNotes || {};
+        dayTodos = data.dayTodos || {};
+        dayOrder = data.dayOrder || {};
+        routines = data.routines || [];
+        routineCompleted = data.routineCompleted || {};
+        return;
+      }
+      return migrateLegacyData();
+    }).catch(function(){
+      return migrateLegacyData();
+    });
+  }
+  // Falls back to the old two-key format so nobody's existing schedule is lost,
+  // then upgrades them to the combined key.
+  function migrateLegacyData(){
+    var p1 = storageGet('workbooks').then(function(r){ workbooks = r ? JSON.parse(r.value) : []; }).catch(function(){ workbooks = []; });
+    var p2 = storageGet('completed').then(function(r){ completed = r ? JSON.parse(r.value) : {}; }).catch(function(){ completed = {}; });
+    return Promise.all([p1,p2]).then(function(){
+      workbooks = normalizeWorkbooks(workbooks);
+      if(workbooks.length || Object.keys(completed).length) saveData();
+    });
+  }
+  function saveData(){
+    if(!STORAGE_AVAILABLE && !LOCAL_STORAGE_AVAILABLE){
+      setSaveStatus('unavailable');
+      return Promise.resolve();
+    }
+    setSaveStatus('saving');
+    return storageSet('app_data', JSON.stringify({
+      workbooks: workbooks, completed: completed, monthNotes: monthNotes, dayTodos: dayTodos,
+      dayOrder: dayOrder, routines: routines, routineCompleted: routineCompleted
+    }))
+      .then(function(){ setSaveStatus('saved'); })
+      .catch(function(){ setSaveStatus('error'); });
+  }
+
+  // ---------- user profiles (name + birth date; the "active" one drives the page title) ----------
+  function loadUserProfile(){
+    if(!STORAGE_AVAILABLE && !LOCAL_STORAGE_AVAILABLE) return Promise.resolve();
+    return storageGet('user_profile').then(function(r){
+      if(!r){ userProfiles = []; activeUserId = null; return; }
+      var data = JSON.parse(r.value);
+      if(data && Array.isArray(data.profiles)){
+        userProfiles = data.profiles;
+        activeUserId = data.activeUserId || (userProfiles[0] ? userProfiles[0].id : null);
+      } else if(data && data.name){
+        // Upgrades the old single-profile format ({name, birth}) to a list.
+        var legacy = { id: 'user_legacy', name: data.name, birth: data.birth || '' };
+        userProfiles = [legacy];
+        activeUserId = legacy.id;
+      } else {
+        userProfiles = []; activeUserId = null;
+      }
+    }).catch(function(){ userProfiles = []; activeUserId = null; });
+  }
+  function saveUserProfile(){
+    if(!STORAGE_AVAILABLE && !LOCAL_STORAGE_AVAILABLE) return Promise.resolve();
+    return storageSet('user_profile', JSON.stringify({ profiles: userProfiles, activeUserId: activeUserId })).catch(function(){});
+  }
+  // "Spring" -> "Spring's Study Planner"; no active user -> "Study Planner".
+  function updateAppTitle(){
+    var active = userProfiles.find(function(p){ return p.id === activeUserId; });
+    var title = active ? (active.name + "'s Study Planner") : 'Study Planner';
+    document.title = title;
+    var h1 = document.getElementById('appTitle');
+    if(h1) h1.textContent = title;
+  }
+
+  // ---------- backup file (works everywhere, no dependency on window.storage) ----------
+  // Same characters Windows disallows in filenames — strip them so the
+  // download works regardless of platform, even if the name has odd chars.
+  function sanitizeFilename(s){
+    return s.replace(/[\\/:*?"<>|]/g, '');
+  }
+  function toYYMMDD(d){
+    return String(d.getFullYear()).slice(-2) + pad(d.getMonth()+1) + pad(d.getDate());
+  }
+  function exportBackup(){
+    var payload = {
+      workbooks: workbooks, completed: completed,
+      monthNotes: monthNotes, dayTodos: dayTodos,
+      dayOrder: dayOrder, routines: routines, routineCompleted: routineCompleted,
+      userProfiles: userProfiles, activeUserId: activeUserId,
+      exportedAt: new Date().toISOString()
+    };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var activeProfile = userProfiles.find(function(p){ return p.id === activeUserId; });
+    var titlePart = activeProfile ? (activeProfile.name + "'s Study Planner") : 'Study Planner';
+    a.href = url;
+    a.download = sanitizeFilename(titlePart) + '_' + toYYMMDD(new Date()) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+  function importBackupFile(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var data;
+      try{
+        data = JSON.parse(e.target.result);
+        if(!data || !Array.isArray(data.workbooks)) throw new Error('invalid');
+      } catch(err){
+        alert('올바른 백업 파일이 아니에요.');
+        return;
+      }
+      if(!confirm('백업 파일을 불러오면 현재 화면의 데이터(사용자 설정 포함)를 덮어써요. 계속할까요?')) return;
+      workbooks = normalizeWorkbooks(data.workbooks || []);
+      completed = data.completed || {};
+      monthNotes = data.monthNotes || {};
+      dayTodos = data.dayTodos || {};
+      dayOrder = data.dayOrder || {};
+      routines = data.routines || [];
+      routineCompleted = data.routineCompleted || {};
+      if(Array.isArray(data.userProfiles)){
+        userProfiles = data.userProfiles;
+        activeUserId = data.activeUserId || (userProfiles[0] ? userProfiles[0].id : null);
+      }
+      invalidateSchedule();
+      saveData();
+      saveUserProfile();
+      updateAppTitle();
+      renderWorkbookList();
+      render();
+      alert('백업을 불러왔어요!');
+    };
+    reader.readAsText(file);
+  }
+
+  // ---------- schedule engine ----------
+  // The schedule only depends on `workbooks`, not on completion state, so it's
+  // cached and only rebuilt when a workbook is added/edited/deleted —
+  // not on every checkbox click.
+  var scheduleCache = null;
+  function invalidateSchedule(){ scheduleCache = null; }
+  function getSchedule(){
+    if(!scheduleCache) scheduleCache = buildSchedule();
+    return scheduleCache;
+  }
+  // Walks a single mutable date cursor forward (instead of allocating a new
+  // Date object every day) so adding an item with a large round count stays
+  // fast even with several items already on the calendar. Each item can have
+  // multiple date-range segments, each with its own set of weekdays.
+  function buildSchedule(){
+    var map = {};
+    workbooks.forEach(function(wb){
+      iterateWorkbookOccurrences(wb, function(dateObj, occurrence, timeEntry){
+        var iso = toISO(dateObj);
+        if(!map[iso]) map[iso] = [];
+        map[iso].push({
+          workbookId: wb.id, name: wb.name, color: wb.color, kind: wb.kind || 'book',
+          round: occurrence, classTime: timeEntry ? { start: timeEntry.start, end: timeEntry.end } : null,
+          isMultiDay: wb.kind === 'event' && wb.startDate !== wb.endDate,
+          isFirstDay: wb.kind === 'event' && iso === wb.startDate,
+          memo: wb.memo || '',
+          hasRoundInfo: (wb.kind || 'book') === 'book' ? !!wb.totalRounds : false
+        });
+      });
+    });
+    // Within each day, classes are ordered by their set class time so a
+    // parent can see the day chronologically; books keep their existing
+    // (registration) order and are listed first since they have no time.
+    Object.keys(map).forEach(function(iso){
+      map[iso].sort(function(a,b){
+        var aClass = a.kind === 'class', bClass = b.kind === 'class';
+        if(aClass !== bClass) return aClass ? 1 : -1;
+        if(aClass && bClass){
+          var at = (a.classTime && a.classTime.start) || '';
+          var bt = (b.classTime && b.classTime.start) || '';
+          if(at !== bt) return at < bt ? -1 : 1;
+        }
+        return 0; // stable sort preserves original order otherwise
+      });
+    });
+    return map;
+  }
+  function computeEndDate(wb){
+    var lastISO = null;
+    iterateWorkbookOccurrences(wb, function(dateObj){ lastISO = toISO(dateObj); });
+    return lastISO || '-';
+  }
+  // Total number of scheduled occurrences — the user enters this directly
+  // for books (총 회차 수), but for classes it's derived from the weekday
+  // pattern and end date instead (no round count to enter).
+  function sessionCountForWorkbook(wb){
+    var count = 0;
+    iterateWorkbookOccurrences(wb, function(){ count++; });
+    return count;
+  }
+
+  // ---------- render: shared pieces ----------
+  function kindIcon(kind){ return kind === 'event' ? '🗓️' : (kind === 'class' ? '🏫' : '📘'); }
+  // classTimeLabel reads a per-occurrence schedule item's classTime (e.g. a
+  // calendar chip) — each occurrence carries its own {start,end} because
+  // different weekdays can have different times.
+  function classTimeLabel(it){
+    if(!it.classTime || !it.classTime.start) return '';
+    return it.classTime.end ? (it.classTime.start+' ~ '+it.classTime.end) : it.classTime.start;
+  }
+  // Workbook-level summary of a class's weekly time table, e.g.
+  // "월 16:00~17:00, 수 17:00~18:00" — used in the manage list / List tab.
+  function weeklyScheduleSummary(wb){
+    if(!wb.weeklySchedule || !wb.weeklySchedule.length) return '';
+    return wb.weeklySchedule.slice().sort(function(a,b){ return a.day - b.day; }).map(function(e){
+      var t = e.end ? (e.start+'~'+e.end) : e.start;
+      return WEEKDAY_NAMES[e.day]+' '+t;
+    }).join(', ');
+  }
+  function classScheduleSummary(wb){
+    var days = weeklyScheduleSummary(wb);
+    return (days ? days+' · ' : '') + (wb.startDate || '?') + '~' + (wb.endDate || '?');
+  }
+  // Event date range + optional time, e.g. "2026-08-01~2026-08-05" or
+  // "2026-08-10 · 14:00 ~ 15:00" for a single-day timed appointment.
+  function eventScheduleSummary(wb){
+    var range = (wb.startDate === wb.endDate) ? wb.startDate : (wb.startDate + '~' + wb.endDate);
+    var t = (wb.startTime) ? (wb.endTime ? (wb.startTime+' ~ '+wb.endTime) : wb.startTime) : '하루 종일';
+    return range + ' · ' + t;
+  }
+
+  // Simplified legend for the month view: books only (클래스·일정 already
+  // show their own time/banner directly, so they don't need a legend entry
+  // there), and multi-volume series ("연산 1권", "연산 2권", ...) collapse
+  // into a single "연산 1~3권" entry instead of one row per volume. Week and
+  // day views have no legend at all — their item lists already show
+  // everything. If relevantBookIds is given (a {workbookId: true} map), only
+  // books that actually have an occurrence in the currently-shown range are
+  // included — e.g. the month view only shows books scheduled that month.
+  function bookSeriesLegendHTML(relevantBookIds){
+    var books = workbooks.filter(function(w){
+      if((w.kind || 'book') !== 'book') return false;
+      if(relevantBookIds) return !!relevantBookIds[w.id];
+      return true;
+    });
+    if(books.length === 0) return '';
+    var groups = {};
+    var order = [];
+    books.forEach(function(wb){
+      var m = wb.name.match(/^(.*?)(\d+)(\D*)$/);
+      var key = m ? ('series:'+m[1]+'\u0000'+m[3]) : ('solo:'+wb.id);
+      if(!groups[key]){
+        groups[key] = m ? { prefix: m[1], suffix: m[3], items: [] } : { solo: wb };
+        order.push(key);
+      }
+      if(m) groups[key].items.push({ num: parseInt(m[2],10), wb: wb });
+    });
+    var html = order.map(function(key){
+      var g = groups[key];
+      if(g.solo){
+        return '<button type="button" class="legend-item legend-edit" data-id="'+g.solo.id+'" title="클릭해서 수정"><span class="legend-dot" style="background:'+g.solo.color+'"></span>📘 '+escapeHTML(g.solo.name)+'</button>';
+      }
+      if(g.items.length === 1){
+        var only = g.items[0].wb;
+        return '<button type="button" class="legend-item legend-edit" data-id="'+only.id+'" title="클릭해서 수정"><span class="legend-dot" style="background:'+only.color+'"></span>📘 '+escapeHTML(only.name)+'</button>';
+      }
+      var sorted = g.items.slice().sort(function(a,b){ return a.num - b.num; });
+      var label = g.prefix.trim() + ' ' + sorted[0].num + '~' + sorted[sorted.length-1].num + g.suffix;
+      return '<button type="button" class="legend-item legend-edit-series" title="클릭해서 권 선택 후 수정"><span class="legend-dot" style="background:'+sorted[0].wb.color+'"></span>📘 '+escapeHTML(label)+'</button>';
+    }).join('');
+    return '<div class="legend">' + html + '</div>';
+  }
+
+  function chipHTML(it, iso){
+    var key = iso+'|'+it.workbookId+'|'+it.round;
+    var done = !!completed[key];
+    var style = '--chip-color:'+it.color+';--chip-bg:'+hexToRgba(it.color,0.15)+';--chip-border:'+hexToRgba(it.color,0.5)+';';
+    var isClass = it.kind === 'class';
+    var isBook = it.kind === 'book' || !it.kind;
+    var showBadge = isBook && it.hasRoundInfo;
+    var label = (isClass && it.classTime && it.classTime.start)
+      ? escapeHTML(it.name) + ' ' + escapeHTML(it.classTime.start)
+      : escapeHTML(it.name);
+    var badge = showBadge ? '<span class="round-badge">'+it.round+'</span>' : '';
+    var titleSuffix = isClass ? (classTimeLabel(it)||'') : (showBadge ? (it.round+'회차') : '');
+    var titleHint = isBook ? ' (드래그해서 날짜 이동 · 우클릭 메뉴)' : ' (우클릭 메뉴)';
+    var dragAttr = isBook ? ' draggable="true"' : '';
+    var memoLine = it.memo ? ('\n📝 '+it.memo) : '';
+    return '<button type="button" class="chip'+(done?' done':'')+(isBook?' draggable-chip':'')+'"'+dragAttr+' style="'+style+'" data-key="'+key+'" title="'+escapeHTML(it.name)+' '+titleSuffix+titleHint+escapeHTML(memoLine)+'">'+
+      '<span class="chip-dot"></span><span class="chip-text">'+label+'</span>'+badge+'</button>';
+  }
+
+  // showCheckbox=false renders a read-only row with no stamp checkbox (used
+  // by the week view, which is meant as an at-a-glance overview rather than
+  // a place to check items off — that still happens in the day view).
+  function reorderButtonsHTML(key){
+    return '<span class="reorder-btns">'+
+      '<button type="button" class="reorder-btn" data-dir="-1" data-key="'+key+'" title="위로">▲</button>'+
+      '<button type="button" class="reorder-btn" data-dir="1" data-key="'+key+'" title="아래로">▼</button>'+
+      '</span>';
+  }
+
+  // reorderable=true adds ▲▼ buttons (used only in the day view, where the
+  // user can rearrange checklist items/classes/events for that day).
+  function itemRowHTML(it, iso, showCheckbox, reorderable){
+    if(showCheckbox === undefined) showCheckbox = true;
+    var key = iso+'|'+it.workbookId+'|'+it.round;
+    var done = !!completed[key];
+    var showRoundInfo = (it.kind === 'book' || !it.kind) && it.hasRoundInfo;
+    var meta = it.kind === 'class'
+      ? (it.classTime && it.classTime.start ? '<span class="item-round">🕓 '+escapeHTML(classTimeLabel(it))+'</span>' : '')
+      : (showRoundInfo ? '<span class="item-round"><span class="round-badge">'+it.round+'</span>회차</span>' : '');
+    var memoLine = it.memo ? ('\n📝 '+it.memo) : '';
+    var stampHTML = showCheckbox
+      ? '<span class="stamp-box" style="--chip-color:'+it.color+'">'+(done?'<span class="stamp-mark"></span>':'')+'</span>'
+      : '';
+    var rowClass = 'item-row'+(done?' done':'')+(showCheckbox?'':' no-check');
+    var roleAttrs = showCheckbox ? ' role="checkbox" aria-checked="'+done+'"' : '';
+    var entryKeyAttr = reorderable ? ' data-entry-key="'+key+'"' : '';
+    return '<div class="'+rowClass+'" data-key="'+key+'"'+entryKeyAttr+roleAttrs+' tabindex="0" title="우클릭 메뉴 (수정 · 미루기 · 지우기)'+escapeHTML(memoLine)+'">'+
+      stampHTML+
+      '<span class="item-text"><span class="item-name">'+kindIcon(it.kind)+' '+escapeHTML(it.name)+'</span>'+meta+'</span>'+
+      (reorderable ? reorderButtonsHTML(key) : '')+
+      '</div>';
+  }
+
+  // Events render as a distinct banner (not a checkbox row) — no completion
+  // stamp, no round badge — since they're calendar markers, not study tasks.
+  // reorderable=true (day view only) adds ▲▼ buttons alongside the banner.
+  function eventBannerHTML(it, iso, compact, reorderable){
+    var key = iso+'|'+it.workbookId+'|'+it.round;
+    var timeLabel = it.classTime && it.classTime.start ? ' · ' + classTimeLabel(it) : '';
+    var style = '--chip-color:'+it.color+';--chip-bg:'+hexToRgba(it.color,0.3)+';--chip-border:'+hexToRgba(it.color,0.55)+';';
+    var text = escapeHTML(it.name) + (compact ? '' : timeLabel);
+    var memoLine = it.memo ? ('\n📝 '+it.memo) : '';
+    var titleAttr = ' title="'+escapeHTML(it.name)+timeLabel+' (우클릭하여 수정)'+escapeHTML(memoLine)+'"';
+    if(!reorderable){
+      return '<button type="button" class="event-banner'+(compact?' compact':'')+'" style="'+style+'" data-key="'+key+'"'+titleAttr+'>'+
+        '🗓️ '+text+'</button>';
+    }
+    return '<div class="event-banner-wrap" data-entry-key="'+key+'" style="'+style+'">'+
+      '<button type="button" class="event-banner in-wrap" data-key="'+key+'"'+titleAttr+'>🗓️ '+text+'</button>'+
+      reorderButtonsHTML(key)+
+      '</div>';
+  }
+
+  function emptyStateHTML(msg){
+    return '<div class="empty-state">'+(msg||'예정된 공부가 없어요 🎈')+'<br><span>다른 날짜를 확인해보세요.</span></div>';
+  }
+
+  // ---------- render: month ----------
+  function renderMonth(container, refDate, schedule){
+    var year = refDate.getFullYear(), month = refDate.getMonth();
+    var first = new Date(year, month, 1);
+    var startOffset = first.getDay();
+    var daysInMonth = new Date(year, month+1, 0).getDate();
+    var todayISO = toISO(new Date());
+
+    // Only show books in the legend that actually have an occurrence this
+    // month, instead of every book ever registered.
+    var relevantBookIds = {};
+    for(var pd=1; pd<=daysInMonth; pd++){
+      var pIso = toISO(new Date(year, month, pd));
+      (schedule[pIso] || []).forEach(function(it){
+        if(it.kind === 'book' || !it.kind) relevantBookIds[it.workbookId] = true;
+      });
+    }
+
+    var monthKey = monthKeyOf(year, month);
+    var note = monthNotes[monthKey] || '';
+    var html = '<div class="view-header">'+
+      '<div class="view-header-top"><h2>'+year+'년 '+(month+1)+'월 학습 계획</h2>'+
+      '<button type="button" class="plan-tab" id="monthNoteToggleBtn" data-month-key="'+monthKey+'">✏️ 직접 작성하기</button>'+
+      '</div>'+
+      bookSeriesLegendHTML(relevantBookIds)+
+      (note ? '<div class="month-note-display">📝 '+escapeHTML(note)+'</div>' : '')+
+      '<div class="month-note-editor" id="monthNoteEditor" style="display:none;">'+
+      '<textarea id="monthNoteInput" placeholder="이번 달 학습 계획을 자유롭게 적어보세요">'+escapeHTML(note)+'</textarea>'+
+      '<div class="form-actions"><button type="button" class="plan-tab" id="cancelMonthNoteBtn">취소</button>'+
+      '<button type="button" class="save-note-btn" id="saveMonthNoteBtn">저장</button></div>'+
+      '</div></div>';
+    html += '<div class="month-grid-wrap"><div class="month-grid">';
+    WEEKDAY_NAMES.forEach(function(w,i){
+      html += '<div class="wd-head'+(i===0?' sun':'')+(i===6?' sat':'')+'">'+w+'</div>';
+    });
+    for(var i=0;i<startOffset;i++) html += '<div class="cell blank"></div>';
+    for(var d=1; d<=daysInMonth; d++){
+      var dateObj = new Date(year, month, d);
+      var iso = toISO(dateObj);
+      var dow = dateObj.getDay();
+      var items = schedule[iso] || [];
+      var events = items.filter(function(it){ return it.kind === 'event'; });
+      var regularItems = items.filter(function(it){ return it.kind !== 'event'; });
+      var holiday = KOREAN_HOLIDAYS[iso];
+      var cls = 'cell';
+      if(iso === todayISO) cls += ' today';
+      if(dow === 0) cls += ' sun';
+      if(dow === 6) cls += ' sat';
+      if(holiday) cls += ' holiday';
+      var cellStyle = events.length ? ' style="background:'+hexToRgba(events[0].color, 0.14)+';"' : '';
+      html += '<div class="'+cls+'" data-date="'+iso+'"'+cellStyle+'>'+
+        '<div class="cell-date">'+d+'</div>'+
+        (holiday ? '<div class="holiday-label" title="'+escapeHTML(holiday)+'">'+escapeHTML(holiday)+'</div>' : '')+
+        (events.length ? '<div class="event-banner-list">'+events.map(function(it){ return eventBannerHTML(it, iso, true); }).join('')+'</div>' : '')+
+        '<div class="cell-items">'+regularItems.map(function(it){ return chipHTML(it, iso); }).join('')+'</div>'+
+        '</div>';
+    }
+    var totalCells = startOffset + daysInMonth;
+    var trailing = (7 - (totalCells % 7)) % 7;
+    for(var t=0;t<trailing;t++) html += '<div class="cell blank"></div>';
+    html += '</div></div>';
+    container.innerHTML = html;
+  }
+
+  // ---------- render: week ----------
+  function renderWeek(container, refDate, schedule){
+    var start = startOfWeek(refDate);
+    var todayISO = toISO(new Date());
+    var html = '';
+    var days = [];
+    for(var i=0;i<7;i++) days.push(addDays(start,i));
+    var y = start.getFullYear(), m = start.getMonth()+1;
+
+    html += '<div class="view-header"><h2>'+y+'년 '+m+'월 '+start.getDate()+'일 주 학습 계획</h2></div>';
+    html += '<div class="week-grid-wrap"><div class="week-grid">';
+    days.forEach(function(dateObj){
+      var iso = toISO(dateObj);
+      var dow = dateObj.getDay();
+      var items = schedule[iso] || [];
+      var events = items.filter(function(it){ return it.kind === 'event'; });
+      var regularItems = items.filter(function(it){ return it.kind !== 'event'; });
+      var holiday = KOREAN_HOLIDAYS[iso];
+      var isToday = iso === todayISO;
+      var cls = 'week-day';
+      if(isToday) cls += ' today';
+      if(dow === 0) cls += ' sun';
+      if(dow === 6) cls += ' sat';
+      if(holiday) cls += ' holiday';
+      var sectionStyle = events.length ? ' style="background:'+hexToRgba(events[0].color, 0.10)+';"' : '';
+      html += '<section class="'+cls+'" data-date="'+iso+'"'+sectionStyle+'>'+
+        '<h3><span class="week-day-num">'+(dateObj.getMonth()+1)+'/'+dateObj.getDate()+'</span>'+
+        '<span class="week-day-dow">'+WEEKDAY_NAMES[dow]+(isToday?' · 오늘':'')+'</span>'+
+        (holiday ? '<span class="holiday-label" title="'+escapeHTML(holiday)+'">'+escapeHTML(holiday)+'</span>' : '')+
+        '</h3>'+
+        (events.length ? '<div class="event-banner-list">'+events.map(function(it){ return eventBannerHTML(it, iso, true); }).join('')+'</div>' : '')+
+        '<div class="item-list">'+
+        (regularItems.length ? regularItems.map(function(it){ return itemRowHTML(it, iso, false); }).join('') : '<p class="muted">-</p>')+
+        '</div></section>';
+    });
+    html += '</div></div>';
+    container.innerHTML = html;
+  }
+
+  // ---------- render: day ----------
+  function todoRowHTML(todo, iso){
+    var done = !!todo.done;
+    var key = iso + '|' + todo.id;
+    return '<div class="item-row todo-row'+(done?' done':'')+'" data-todo-id="'+todo.id+'" data-date="'+iso+'" data-entry-key="'+key+'" role="checkbox" aria-checked="'+done+'" tabindex="0">'+
+      '<span class="stamp-box" style="--chip-color:#7A8CA0;">'+(done?'<span class="stamp-mark"></span>':'')+'</span>'+
+      '<span class="item-text"><span class="item-name">📝 '+escapeHTML(todo.text)+'</span></span>'+
+      '<button type="button" class="todo-delete" data-todo-id="'+todo.id+'" data-date="'+iso+'" title="삭제">✕</button>'+
+      reorderButtonsHTML(key)+
+      '</div>';
+  }
+
+  function routineRowHTML(routine, iso){
+    var key = iso + '|' + routine.id;
+    var done = !!routineCompleted[key];
+    return '<div class="item-row routine-row'+(done?' done':'')+'" data-routine-id="'+routine.id+'" data-date="'+iso+'" data-entry-key="'+key+'" role="checkbox" aria-checked="'+done+'" tabindex="0" title="우클릭하여 수정 · 삭제">'+
+      '<span class="stamp-box" style="--chip-color:#6FA85E;">'+(done?'<span class="stamp-mark"></span>':'')+'</span>'+
+      '<span class="item-text"><span class="item-name">🔁 '+escapeHTML(routine.name)+'</span></span>'+
+      reorderButtonsHTML(key)+
+      '</div>';
+  }
+
+  // Builds ONE combined, ordered list of everything shown in the day view —
+  // events, routines, ad-hoc todos, and book/class checklist items — so they
+  // can all be reordered relative to each other (not just within their own
+  // type). Falls back to a sensible default order (events, routines, todos,
+  // then checklist items) until the user customizes it via ▲▼.
+  function buildDayEntries(iso, schedule, refDate){
+    var items = schedule[iso] || [];
+    var entries = [];
+    items.filter(function(it){ return it.kind === 'event'; }).forEach(function(it){ entries.push({ type:'event', data: it }); });
+    routinesForDate(refDate).forEach(function(r){ entries.push({ type:'routine', data: r }); });
+    (dayTodos[iso] || []).forEach(function(t){ entries.push({ type:'todo', data: t }); });
+    items.filter(function(it){ return it.kind !== 'event'; }).forEach(function(it){ entries.push({ type: it.kind === 'class' ? 'class' : 'book', data: it }); });
+    var order = dayOrder[iso];
+    if(order && order.length){
+      var indexOf = {};
+      order.forEach(function(k,i){ indexOf[k] = i; });
+      entries.sort(function(a,b){
+        var ka = dayEntryKey(a, iso), kb = dayEntryKey(b, iso);
+        var ia = indexOf.hasOwnProperty(ka) ? indexOf[ka] : Infinity;
+        var ib = indexOf.hasOwnProperty(kb) ? indexOf[kb] : Infinity;
+        return ia - ib;
+      });
+    }
+    return entries;
+  }
+  function dayEntryHTML(entry, iso){
+    if(entry.type === 'event') return eventBannerHTML(entry.data, iso, false, true);
+    if(entry.type === 'routine') return routineRowHTML(entry.data, iso);
+    if(entry.type === 'todo') return todoRowHTML(entry.data, iso);
+    return itemRowHTML(entry.data, iso, true, true);
+  }
+
+  function renderDay(container, refDate, schedule){
+    var iso = toISO(refDate);
+    var holiday = KOREAN_HOLIDAYS[iso];
+    var label = refDate.getFullYear()+'년 '+(refDate.getMonth()+1)+'월 '+refDate.getDate()+'일 ('+WEEKDAY_NAMES[refDate.getDay()]+')'+
+      (holiday ? ' · <span class="holiday-tag">'+escapeHTML(holiday)+'</span>' : '');
+    var entries = buildDayEntries(iso, schedule, refDate);
+    var regularEntries = entries.filter(function(e){ return e.type === 'book' || e.type === 'class'; });
+    var doneCount = regularEntries.filter(function(e){ return !!completed[keyOf(e.data, iso)]; }).length;
+
+    var html = '<div class="day-view"><div class="view-header">'+
+      '<div class="view-header-top"><h2>'+label+'</h2>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;">'+
+      '<button type="button" class="plan-tab" id="addTodoBtn" data-date="'+iso+'">➕ 할일 추가하기</button>'+
+      '<button type="button" class="plan-tab" id="addRoutineBtn" data-date="'+iso+'">🔁 생활 루틴 추가하기</button>'+
+      '</div></div>'+
+      '<div class="todo-add-row" id="todoAddRow" style="display:none;">'+
+      '<input type="text" id="todoInput" placeholder="할일을 입력하세요" maxlength="60">'+
+      '<button type="button" id="saveTodoBtn">추가</button>'+
+      '</div>'+
+      '<div class="routine-add-form" id="routineAddForm" style="display:none;">'+
+      '<input type="text" id="routineNameInput" placeholder="루틴 이름 (예: 아침 운동, 독서 30분)" maxlength="40">'+
+      '<div class="weekday-picker" id="routineDayPicker">'+
+      WEEKDAY_NAMES.map(function(w,i){ return '<label class="wd-chip"><input type="checkbox" value="'+i+'"><span>'+w+'</span></label>'; }).join('')+
+      '</div>'+
+      '<div class="field-label">종료일 (이 날짜까지 선택한 요일마다 반복돼요)</div>'+
+      '<input type="date" id="routineEndDateInput">'+
+      '<div class="form-actions"><button type="button" class="plan-tab" id="cancelRoutineBtn">취소</button>'+
+      '<button type="button" class="save-note-btn" id="saveRoutineBtn">추가</button></div>'+
+      '</div>'+
+      '</div>';
+    if(entries.length){
+      html += '<div class="item-list large">'+entries.map(function(e){ return dayEntryHTML(e, iso); }).join('')+'</div>';
+      if(regularEntries.length){
+        html += '<p class="progress-note">'+doneCount+' / '+regularEntries.length+' 완료 · 다 풀면 도장을 콕! 눌러주세요</p>';
+      }
+    } else {
+      html += emptyStateHTML('오늘은 쉬는 날이에요 🎈');
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+
+  // ---------- render: list (all registered workbooks/classes) ----------
+  function listCardHTML(wb){
+    if(wb.kind === 'event'){
+      return '<div class="list-card" style="--chip-color:'+wb.color+'">'+
+        '<div class="list-card-head"><strong>'+kindIcon(wb.kind)+' '+escapeHTML(wb.name)+'</strong>'+
+        '<span class="list-card-kind">일정</span></div>'+
+        '<div class="list-card-meta">📅 '+escapeHTML(eventScheduleSummary(wb))+'</div>'+
+        '<div class="list-card-actions">'+
+        '<button type="button" class="copy-wb" data-id="'+wb.id+'">복사</button>'+
+        '<button type="button" class="edit-wb" data-id="'+wb.id+'">수정</button>'+
+        '<button type="button" class="del-wb" data-id="'+wb.id+'">삭제</button>'+
+        '</div></div>';
+    }
+    var end = computeEndDate(wb);
+    var kindLabel = wb.kind === 'class' ? '클래스' : '문제집';
+    var totalSessions = sessionCountForWorkbook(wb);
+    var doneCount = Object.keys(completed).filter(function(k){ return k.split('|')[1] === wb.id; }).length;
+    var pct = totalSessions ? Math.min(100, Math.round(doneCount / totalSessions * 100)) : 0;
+    var meta = wb.kind === 'class' ? '🕓 '+escapeHTML(classScheduleSummary(wb)) : bookScheduleSummary(wb);
+    return '<div class="list-card" style="--chip-color:'+wb.color+'">'+
+      '<div class="list-card-head"><strong>'+kindIcon(wb.kind)+' '+escapeHTML(wb.name)+'</strong>'+
+      '<span class="list-card-kind">'+kindLabel+'</span></div>'+
+      '<div class="list-card-meta">'+meta+'</div>'+
+      '<div class="list-card-progress">'+
+      '<div class="progress-bar"><div class="progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<span>'+doneCount+' / '+totalSessions+'회 완료 · ~'+end+' 종료 예정</span>'+
+      '</div>'+
+      '<div class="list-card-actions">'+
+      '<button type="button" class="copy-wb" data-id="'+wb.id+'">복사</button>'+
+      '<button type="button" class="edit-wb" data-id="'+wb.id+'">수정</button>'+
+      '<button type="button" class="del-wb" data-id="'+wb.id+'">삭제</button>'+
+      '</div></div>';
+  }
+
+  function listSectionHTML(title, items, emptyMsg){
+    var html = '<div class="list-section"><h3 class="list-section-title">'+title+
+      ' <span class="list-section-count">'+items.length+'</span></h3>';
+    if(items.length === 0){
+      html += '<p class="muted list-section-empty">'+emptyMsg+'</p>';
+    } else {
+      html += '<div class="list-grid">' + items.map(listCardHTML).join('') + '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function renderList(container){
+    var html = '<div class="view-header"><h2>등록된 문제집·클래스·일정</h2></div>';
+    if(workbooks.length === 0){
+      html += emptyStateHTML('아직 등록된 문제집·클래스·일정이 없어요 📋');
+    } else {
+      var books = workbooks.filter(function(w){ return w.kind !== 'class' && w.kind !== 'event'; });
+      var classes = workbooks.filter(function(w){ return w.kind === 'class'; }).slice().sort(function(a,b){
+        var at = (a.weeklySchedule && a.weeklySchedule.length) ? a.weeklySchedule.slice().sort(function(x,y){return x.day-y.day;})[0].start : '';
+        var bt = (b.weeklySchedule && b.weeklySchedule.length) ? b.weeklySchedule.slice().sort(function(x,y){return x.day-y.day;})[0].start : '';
+        return at < bt ? -1 : (at > bt ? 1 : 0);
+      });
+      var events = workbooks.filter(function(w){ return w.kind === 'event'; }).slice().sort(function(a,b){
+        return a.startDate < b.startDate ? -1 : (a.startDate > b.startDate ? 1 : 0);
+      });
+      html += listSectionHTML('📘 문제집', books, '아직 등록된 문제집이 없어요.');
+      html += listSectionHTML('🏫 클래스', classes, '아직 등록된 클래스가 없어요.');
+      html += listSectionHTML('🗓️ 일정', events, '아직 등록된 일정이 없어요.');
+    }
+    container.innerHTML = html;
+  }
+
+  // ---------- period label (toolbar) ----------
+  function updatePeriodLabel(){
+    var label = document.getElementById('periodLabel');
+    if(currentView === 'month'){
+      label.textContent = currentDate.getFullYear()+'년 '+(currentDate.getMonth()+1)+'월';
+    } else if(currentView === 'week'){
+      var start = startOfWeek(currentDate);
+      var end = addDays(start,6);
+      if(start.getMonth() === end.getMonth()){
+        label.textContent = (start.getMonth()+1)+'월 '+start.getDate()+'일 - '+end.getDate()+'일';
+      } else {
+        label.textContent = (start.getMonth()+1)+'월 '+start.getDate()+'일 - '+(end.getMonth()+1)+'월 '+end.getDate()+'일';
+      }
+    } else if(currentView === 'day'){
+      label.textContent = (currentDate.getMonth()+1)+'월 '+currentDate.getDate()+'일 ('+WEEKDAY_NAMES[currentDate.getDay()]+')';
+    } else {
+      label.textContent = '전체 목록';
+    }
+  }
+
+  // ---------- main render ----------
+  function render(){
+    updatePeriodLabel();
+    document.getElementById('emptyBanner').style.display = (workbooks.length === 0 && currentView !== 'list') ? 'flex' : 'none';
+    var container = document.getElementById('viewContainer');
+    var schedule = getSchedule();
+    if(currentView === 'month') renderMonth(container, currentDate, schedule);
+    else if(currentView === 'week') renderWeek(container, currentDate, schedule);
+    else if(currentView === 'day') renderDay(container, currentDate, schedule);
+    else renderList(container);
+    document.body.className = 'view-'+currentView;
+  }
+
+  function updateTabsUI(){
+    document.querySelectorAll('.tab').forEach(function(btn){
+      btn.classList.toggle('active', btn.getAttribute('data-view') === currentView);
+    });
+  }
+
+  function toggleComplete(key){
+    if(completed[key]) delete completed[key];
+    else completed[key] = true;
+    saveData(); // fire-and-forget; UI never waits on the network
+    patchToggle(key);
+  }
+
+  // Updates just the clicked chip/row in place instead of re-rendering the
+  // whole month grid / week list / day list — this is what makes checking
+  // items off feel instant.
+  function patchToggle(key){
+    var container = document.getElementById('viewContainer');
+    var done = !!completed[key];
+    var nodes = container.querySelectorAll('[data-key="' + key + '"]');
+    nodes.forEach(function(node){
+      if(node.classList.contains('chip')){
+        node.classList.toggle('done', done);
+      } else if(node.classList.contains('item-row')){
+        node.classList.toggle('done', done);
+        node.setAttribute('aria-checked', String(done));
+        var stampBox = node.querySelector('.stamp-box');
+        if(stampBox) stampBox.innerHTML = done ? '<span class="stamp-mark"></span>' : '';
+      }
+    });
+    updateProgressNote();
+  }
+
+  function updateProgressNote(){
+    var note = document.querySelector('.progress-note');
+    if(!note) return;
+    var list = document.querySelector('.day-view .item-list');
+    if(!list) return;
+    var total = list.querySelectorAll('.item-row').length;
+    var doneCount = list.querySelectorAll('.item-row.done').length;
+    note.textContent = doneCount + ' / ' + total + ' 완료 · 다 풀면 도장을 콕! 눌러주세요';
+  }
+
+  var toastTimer = null;
+  function showToast(msg){
+    var el = document.getElementById('toast');
+    if(!el){
+      el = document.createElement('div');
+      el.id = 'toast';
+      el.className = 'toast';
+      document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ el.classList.remove('show'); }, 2400);
+  }
+
+  // ---------- ad-hoc daily todos (day view "할일 추가하기") ----------
+  function addTodoFromInput(){
+    var input = document.getElementById('todoInput');
+    var btn = document.getElementById('addTodoBtn');
+    if(!input || !btn) return;
+    var text = input.value.trim();
+    if(!text) return;
+    var iso = btn.getAttribute('data-date');
+    if(!dayTodos[iso]) dayTodos[iso] = [];
+    dayTodos[iso].push({ id: 'todo_' + Date.now() + '_' + Math.floor(Math.random()*1000), text: text, done: false });
+    saveData();
+    render();
+  }
+  function toggleTodoDone(dateISO, todoId){
+    var list = dayTodos[dateISO] || [];
+    var target = list.find(function(t){ return t.id === todoId; });
+    if(!target) return;
+    target.done = !target.done;
+    saveData();
+    render();
+  }
+  function deleteTodo(dateISO, todoId){
+    if(!dayTodos[dateISO]) return;
+    dayTodos[dateISO] = dayTodos[dateISO].filter(function(t){ return t.id !== todoId; });
+    if(!dayTodos[dateISO].length) delete dayTodos[dateISO];
+    saveData();
+    render();
+  }
+
+  // ---------- day view: one unified custom order across events/routines/todos/checklist items ----------
+  function keyOf(it, iso){ return iso+'|'+it.workbookId+'|'+it.round; }
+  // Unique key for any day-view entry regardless of type, used for the single
+  // combined reorder list (so a routine can be moved above/below a book, an
+  // event below a todo, etc. — not just within its own type).
+  function dayEntryKey(entry, iso){
+    if(entry.type === 'todo' || entry.type === 'routine') return iso+'|'+entry.data.id;
+    return keyOf(entry.data, iso);
+  }
+  // Swaps this entry with its neighbor (direction -1 = up, +1 = down) in the
+  // single combined day order (crossing between books/classes, events,
+  // routines, and todos) and persists the result.
+  function moveDayItem(iso, key, direction){
+    var schedule = getSchedule();
+    var entries = buildDayEntries(iso, schedule, fromISO(iso));
+    var keys = entries.map(function(e){ return dayEntryKey(e, iso); });
+    var idx = keys.indexOf(key);
+    var newIdx = idx + direction;
+    if(idx === -1 || newIdx < 0 || newIdx >= keys.length) return;
+    var tmp = keys[idx]; keys[idx] = keys[newIdx]; keys[newIdx] = tmp;
+    dayOrder[iso] = keys;
+    saveData();
+    render();
+  }
+
+  // ---------- day view: long-press to multi-select, then move the whole group at once ----------
+  var selectedDayKeys = [];
+  var longPressTimer = null;
+  var longPressJustFired = false;
+  var LONG_PRESS_MS = 500;
+
+  function dayEntryElFromTarget(target){
+    return target.closest('[data-entry-key]');
+  }
+  function isDaySelectionModeActive(){ return selectedDayKeys.length > 0; }
+  function toggleDaySelection(key){
+    var idx = selectedDayKeys.indexOf(key);
+    if(idx === -1) selectedDayKeys.push(key);
+    else selectedDayKeys.splice(idx, 1);
+    applyDaySelectionHighlight();
+    updateSelectionToolbar();
+  }
+  function clearDaySelection(){
+    selectedDayKeys = [];
+    applyDaySelectionHighlight();
+    updateSelectionToolbar();
+  }
+  function applyDaySelectionHighlight(){
+    document.querySelectorAll('[data-entry-key]').forEach(function(el){
+      el.classList.toggle('day-selected', selectedDayKeys.indexOf(el.getAttribute('data-entry-key')) !== -1);
+    });
+  }
+  function updateSelectionToolbar(){
+    var bar = document.getElementById('selectionToolbar');
+    if(selectedDayKeys.length === 0){
+      if(bar) bar.remove();
+      return;
+    }
+    if(!bar){
+      bar = document.createElement('div');
+      bar.id = 'selectionToolbar';
+      bar.className = 'selection-toolbar';
+      document.body.appendChild(bar);
+    }
+    bar.innerHTML = '<span>'+selectedDayKeys.length+'개 선택됨</span>'+
+      '<button type="button" id="selMoveUpBtn">▲ 위로</button>'+
+      '<button type="button" id="selMoveDownBtn">▼ 아래로</button>'+
+      '<button type="button" id="selClearBtn">✕ 선택 해제</button>';
+  }
+  // Moves the whole selected group up/down by one step at a time, keeping
+  // selected items' relative order to each other unchanged — the standard
+  // "move selected block" algorithm: walk the list in the direction of
+  // travel and swap each selected item past its nearest unselected neighbor.
+  function moveSelectedGroup(direction){
+    if(currentView !== 'day' || selectedDayKeys.length === 0) return;
+    var iso = toISO(currentDate);
+    var schedule = getSchedule();
+    var entries = buildDayEntries(iso, schedule, currentDate);
+    var keys = entries.map(function(e){ return dayEntryKey(e, iso); });
+    var selectedSet = {};
+    selectedDayKeys.forEach(function(k){ selectedSet[k] = true; });
+    if(direction < 0){
+      for(var i=1;i<keys.length;i++){
+        if(selectedSet[keys[i]] && !selectedSet[keys[i-1]]){
+          var tmp = keys[i-1]; keys[i-1] = keys[i]; keys[i] = tmp;
+        }
+      }
+    } else {
+      for(var j=keys.length-2;j>=0;j--){
+        if(selectedSet[keys[j]] && !selectedSet[keys[j+1]]){
+          var tmp2 = keys[j]; keys[j] = keys[j+1]; keys[j+1] = tmp2;
+        }
+      }
+    }
+    dayOrder[iso] = keys;
+    saveData();
+    render();
+    applyDaySelectionHighlight();
+  }
+  document.addEventListener('click', function(e){
+    var selMoveUp = e.target.closest('#selMoveUpBtn');
+    if(selMoveUp){ moveSelectedGroup(-1); return; }
+    var selMoveDown = e.target.closest('#selMoveDownBtn');
+    if(selMoveDown){ moveSelectedGroup(1); return; }
+    var selClear = e.target.closest('#selClearBtn');
+    if(selClear){ clearDaySelection(); return; }
+  });
+
+  // ---------- life routines (day view "생활 루틴 추가하기") — repeats by weekday until an end date, day-view only ----------
+  function routinesForDate(dateObj){
+    var iso = toISO(dateObj);
+    var dow = dateObj.getDay();
+    return routines.filter(function(r){
+      var skip = r.skipDates || [];
+      return iso >= r.startDate && iso <= r.endDate && r.daysOfWeek.indexOf(dow) !== -1 && skip.indexOf(iso) === -1;
+    });
+  }
+  var editingRoutineId = null;
+  function openRoutineEditor(routine, startIso){
+    editingRoutineId = routine ? routine.id : null;
+    var form = document.getElementById('routineAddForm');
+    if(!form) return;
+    form.style.display = 'flex';
+    document.getElementById('routineNameInput').value = routine ? routine.name : '';
+    document.querySelectorAll('#routineDayPicker input').forEach(function(cb){
+      cb.checked = !!(routine && routine.daysOfWeek.indexOf(parseInt(cb.value,10)) !== -1);
+    });
+    document.getElementById('routineEndDateInput').value = routine ? routine.endDate : '';
+    document.getElementById('saveRoutineBtn').textContent = routine ? '수정 완료' : '추가';
+    document.getElementById('addRoutineBtn').setAttribute('data-date', startIso);
+    document.getElementById('routineNameInput').focus();
+  }
+  function closeRoutineEditor(){
+    editingRoutineId = null;
+    var form = document.getElementById('routineAddForm');
+    if(form) form.style.display = 'none';
+  }
+  function addRoutineFromInputs(startIso){
+    var nameInput = document.getElementById('routineNameInput');
+    var endInput = document.getElementById('routineEndDateInput');
+    if(!nameInput || !endInput) return;
+    var name = nameInput.value.trim();
+    var endDate = endInput.value;
+    var days = Array.from(document.querySelectorAll('#routineDayPicker input:checked')).map(function(cb){ return parseInt(cb.value,10); });
+    if(!name || days.length === 0 || !endDate){
+      alert('루틴 이름, 반복 요일, 종료일을 모두 입력해주세요.');
+      return;
+    }
+    var wasEditing = !!editingRoutineId;
+    if(wasEditing){
+      var target = routines.find(function(r){ return r.id === editingRoutineId; });
+      if(target){
+        if(endDate < target.startDate){
+          alert('종료일은 시작일('+target.startDate+')보다 같거나 나중이어야 해요.');
+          return;
+        }
+        target.name = name; target.daysOfWeek = days; target.endDate = endDate;
+      }
+    } else {
+      if(endDate < startIso){
+        alert('종료일은 시작일(오늘 보고 있는 날짜)보다 같거나 나중이어야 해요.');
+        return;
+      }
+      routines.push({
+        id: 'routine_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+        name: name, daysOfWeek: days, startDate: startIso, endDate: endDate
+      });
+    }
+    editingRoutineId = null;
+    saveData();
+    render();
+    showToast(wasEditing ? '✅ 루틴을 수정했어요' : '🔁 생활 루틴을 추가했어요');
+  }
+  function toggleRoutineDone(dateISO, routineId){
+    var key = dateISO + '|' + routineId;
+    if(routineCompleted[key]) delete routineCompleted[key];
+    else routineCompleted[key] = true;
+    saveData();
+    render();
+  }
+  function deleteRoutine(routineId){
+    var target = routines.find(function(r){ return r.id === routineId; });
+    if(!target) return;
+    if(!confirm('"'+target.name+'" 루틴 전체를 삭제할까요? 앞으로의 모든 반복 일정이 사라져요.')) return;
+    routines = routines.filter(function(r){ return r.id !== routineId; });
+    Object.keys(routineCompleted).forEach(function(k){
+      if(k.indexOf('|'+routineId) === k.length - ('|'+routineId).length) delete routineCompleted[k];
+    });
+    saveData();
+    render();
+    showToast('🗑 루틴 전체를 삭제했어요');
+  }
+  // Removes just this one day's occurrence of the routine (via skipDates),
+  // leaving the rest of the recurring schedule untouched.
+  function deleteRoutineOccurrence(routineId, iso){
+    var target = routines.find(function(r){ return r.id === routineId; });
+    if(!target) return;
+    if(!target.skipDates) target.skipDates = [];
+    if(target.skipDates.indexOf(iso) === -1) target.skipDates.push(iso);
+    delete routineCompleted[iso + '|' + routineId];
+    saveData();
+    render();
+    showToast('🗑 오늘 루틴만 삭제했어요');
+  }
+
+  // ---------- event delegation: view container ----------
+  document.getElementById('viewContainer').addEventListener('click', function(e){
+    if(longPressJustFired){
+      longPressJustFired = false;
+      return;
+    }
+    if(isDaySelectionModeActive()){
+      var selEntryEl = dayEntryElFromTarget(e.target);
+      if(selEntryEl && !e.target.closest('.reorder-btn, .todo-delete')){
+        toggleDaySelection(selEntryEl.getAttribute('data-entry-key'));
+        return;
+      }
+    }
+    var legendEdit = e.target.closest('.legend-edit');
+    if(legendEdit){
+      var legendWb = workbooks.find(function(w){ return w.id === legendEdit.getAttribute('data-id'); });
+      if(legendWb){ openModal(legendWb.kind || 'book'); fillFormForEdit(legendWb); }
+      return;
+    }
+    var legendSeries = e.target.closest('.legend-edit-series');
+    if(legendSeries){
+      openModal('book');
+      return;
+    }
+    var noteToggleBtn = e.target.closest('#monthNoteToggleBtn');
+    if(noteToggleBtn){
+      var editor = document.getElementById('monthNoteEditor');
+      var willOpen = editor.style.display === 'none' || !editor.style.display;
+      editor.style.display = willOpen ? 'flex' : 'none';
+      if(willOpen){
+        var input = document.getElementById('monthNoteInput');
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+      }
+      return;
+    }
+    var cancelNoteBtn = e.target.closest('#cancelMonthNoteBtn');
+    if(cancelNoteBtn){
+      document.getElementById('monthNoteEditor').style.display = 'none';
+      return;
+    }
+    var saveNoteBtn = e.target.closest('#saveMonthNoteBtn');
+    if(saveNoteBtn){
+      var monthKey = document.getElementById('monthNoteToggleBtn').getAttribute('data-month-key');
+      var text = document.getElementById('monthNoteInput').value.trim();
+      if(text) monthNotes[monthKey] = text;
+      else delete monthNotes[monthKey];
+      saveData();
+      render();
+      showToast('✅ 메모를 저장했어요');
+      return;
+    }
+    var addTodoBtn = e.target.closest('#addTodoBtn');
+    if(addTodoBtn){
+      var todoRow = document.getElementById('todoAddRow');
+      var willOpenTodo = todoRow.style.display === 'none' || !todoRow.style.display;
+      todoRow.style.display = willOpenTodo ? 'flex' : 'none';
+      if(willOpenTodo) document.getElementById('todoInput').focus();
+      return;
+    }
+    var saveTodoBtn = e.target.closest('#saveTodoBtn');
+    if(saveTodoBtn){
+      addTodoFromInput();
+      return;
+    }
+    var todoDeleteBtn = e.target.closest('.todo-delete');
+    if(todoDeleteBtn){
+      deleteTodo(todoDeleteBtn.getAttribute('data-date'), todoDeleteBtn.getAttribute('data-todo-id'));
+      return;
+    }
+    var reorderBtn = e.target.closest('.reorder-btn');
+    if(reorderBtn){
+      var reorderDate = toISO(currentDate);
+      moveDayItem(reorderDate, reorderBtn.getAttribute('data-key'), parseInt(reorderBtn.getAttribute('data-dir'), 10));
+      return;
+    }
+    var todoRowEl = e.target.closest('.todo-row');
+    if(todoRowEl){
+      toggleTodoDone(todoRowEl.getAttribute('data-date'), todoRowEl.getAttribute('data-todo-id'));
+      return;
+    }
+    var addRoutineBtn = e.target.closest('#addRoutineBtn');
+    if(addRoutineBtn){
+      var routineForm = document.getElementById('routineAddForm');
+      var willOpenRoutine = routineForm.style.display === 'none' || !routineForm.style.display;
+      if(willOpenRoutine){
+        openRoutineEditor(null, addRoutineBtn.getAttribute('data-date'));
+      } else {
+        closeRoutineEditor();
+      }
+      return;
+    }
+    var cancelRoutineBtn = e.target.closest('#cancelRoutineBtn');
+    if(cancelRoutineBtn){
+      closeRoutineEditor();
+      return;
+    }
+    var saveRoutineBtn = e.target.closest('#saveRoutineBtn');
+    if(saveRoutineBtn){
+      addRoutineFromInputs(document.getElementById('addRoutineBtn').getAttribute('data-date'));
+      return;
+    }
+    var routineRowEl = e.target.closest('.routine-row');
+    if(routineRowEl){
+      toggleRoutineDone(routineRowEl.getAttribute('data-date'), routineRowEl.getAttribute('data-routine-id'));
+      return;
+    }
+    var toggler = e.target.closest('.chip, .item-row:not(.no-check):not(.todo-row):not(.routine-row)');
+    if(toggler){
+      toggleComplete(toggler.getAttribute('data-key'));
+      return;
+    }
+    var copyBtn = e.target.closest('.copy-wb');
+    if(copyBtn){
+      var srcWb = workbooks.find(function(w){ return w.id === copyBtn.getAttribute('data-id'); });
+      if(srcWb){ openModal(srcWb.kind || 'book'); fillFormForCopy(srcWb); }
+      return;
+    }
+    var editBtn = e.target.closest('.edit-wb');
+    if(editBtn){
+      var targetWb = workbooks.find(function(w){ return w.id === editBtn.getAttribute('data-id'); });
+      if(targetWb){ openModal(targetWb.kind || 'book'); fillFormForEdit(targetWb); }
+      return;
+    }
+    var delBtn = e.target.closest('.del-wb');
+    if(delBtn){
+      deleteWorkbookById(delBtn.getAttribute('data-id'));
+      return;
+    }
+    var cell = e.target.closest('.cell:not(.blank)');
+    if(cell){
+      currentDate = fromISO(cell.getAttribute('data-date'));
+      currentView = 'day';
+      updateTabsUI();
+      render();
+      return;
+    }
+    var weekHeader = e.target.closest('.week-day h3');
+    if(weekHeader){
+      var section = weekHeader.closest('.week-day');
+      currentDate = fromISO(section.getAttribute('data-date'));
+      currentView = 'day';
+      updateTabsUI();
+      render();
+    }
+  });
+  document.getElementById('viewContainer').addEventListener('keydown', function(e){
+    if(e.target && e.target.id === 'todoInput' && e.key === 'Enter'){
+      e.preventDefault();
+      addTodoFromInput();
+      return;
+    }
+    if(e.target && e.target.id === 'routineNameInput' && e.key === 'Enter'){
+      e.preventDefault();
+      addRoutineFromInputs(document.getElementById('addRoutineBtn').getAttribute('data-date'));
+      return;
+    }
+    if(e.key === 'Enter' || e.key === ' '){
+      var toggler = e.target.closest('.item-row:not(.no-check):not(.todo-row):not(.routine-row)');
+      if(toggler){
+        e.preventDefault();
+        toggleComplete(toggler.getAttribute('data-key'));
+        return;
+      }
+      var todoRowEl = e.target.closest('.todo-row');
+      if(todoRowEl){
+        e.preventDefault();
+        toggleTodoDone(todoRowEl.getAttribute('data-date'), todoRowEl.getAttribute('data-todo-id'));
+        return;
+      }
+      var routineRowEl = e.target.closest('.routine-row');
+      if(routineRowEl){
+        e.preventDefault();
+        toggleRoutineDone(routineRowEl.getAttribute('data-date'), routineRowEl.getAttribute('data-routine-id'));
+      }
+    }
+  });
+
+  // ---------- drag & drop: move a workbook occurrence to a different day ----------
+  // Only 📘 문제집 chips (month view) are draggable — see chipHTML's isBook check.
+  var draggedKey = null;
+  var viewContainerEl = document.getElementById('viewContainer');
+  viewContainerEl.addEventListener('dragstart', function(e){
+    var chip = e.target.closest('.draggable-chip');
+    if(!chip){ e.preventDefault(); return; }
+    draggedKey = chip.getAttribute('data-key');
+    chip.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', draggedKey);
+  });
+  viewContainerEl.addEventListener('dragend', function(e){
+    var chip = e.target.closest('.draggable-chip');
+    if(chip) chip.classList.remove('dragging');
+    viewContainerEl.querySelectorAll('.cell.drop-target').forEach(function(c){ c.classList.remove('drop-target'); });
+    draggedKey = null;
+  });
+  viewContainerEl.addEventListener('dragover', function(e){
+    if(!draggedKey) return;
+    var cell = e.target.closest('.cell:not(.blank)');
+    if(!cell) return;
+    e.preventDefault(); // allow drop
+    e.dataTransfer.dropEffect = 'move';
+    viewContainerEl.querySelectorAll('.cell.drop-target').forEach(function(c){
+      if(c !== cell) c.classList.remove('drop-target');
+    });
+    cell.classList.add('drop-target');
+  });
+  viewContainerEl.addEventListener('dragleave', function(e){
+    var cell = e.target.closest('.cell:not(.blank)');
+    if(cell && !cell.contains(e.relatedTarget)) cell.classList.remove('drop-target');
+  });
+  viewContainerEl.addEventListener('drop', function(e){
+    var cell = e.target.closest('.cell:not(.blank)');
+    if(!cell || !draggedKey) return;
+    e.preventDefault();
+    cell.classList.remove('drop-target');
+    var newDate = cell.getAttribute('data-date');
+    var key = draggedKey;
+    draggedKey = null;
+    rescheduleOccurrence(key, newDate);
+  });
+
+  // ---------- day view: long-press an item to start/extend multi-select ----------
+  function startLongPress(e){
+    if(currentView !== 'day') return;
+    if(e.type === 'mousedown' && e.button !== 0) return; // ignore right/middle click
+    if(e.target.closest('.reorder-btn, .todo-delete')) return;
+    var entryEl = dayEntryElFromTarget(e.target);
+    if(!entryEl) return;
+    clearTimeout(longPressTimer);
+    longPressJustFired = false;
+    longPressTimer = setTimeout(function(){
+      longPressJustFired = true;
+      toggleDaySelection(entryEl.getAttribute('data-entry-key'));
+      if(navigator.vibrate) navigator.vibrate(15);
+    }, LONG_PRESS_MS);
+  }
+  function cancelLongPress(){
+    clearTimeout(longPressTimer);
+  }
+  viewContainerEl.addEventListener('mousedown', startLongPress);
+  viewContainerEl.addEventListener('touchstart', startLongPress, { passive: true });
+  viewContainerEl.addEventListener('mouseup', cancelLongPress);
+  viewContainerEl.addEventListener('mouseleave', cancelLongPress);
+  viewContainerEl.addEventListener('touchend', cancelLongPress);
+  viewContainerEl.addEventListener('touchmove', cancelLongPress);
+
+  // Moves just the dragged occurrence to newDate (drag-and-drop) — later
+  // occurrences of the same workbook are unaffected, unlike "1회차 미루기"
+  // which shifts everything after it.
+  function rescheduleOccurrence(key, newDate){
+    var parts = key.split('|');
+    var origDate = parts[0], workbookId = parts[1];
+    if(origDate === newDate) return;
+    var wb = workbooks.find(function(w){ return w.id === workbookId; });
+    if(!wb) return;
+    if(!wb.dateOverrides) wb.dateOverrides = {};
+    // Resolve through any existing override chain so re-dragging an already
+    // moved chip still targets the right original date.
+    var baseOrig = origDate;
+    Object.keys(wb.dateOverrides).forEach(function(k){
+      if(wb.dateOverrides[k] === origDate) baseOrig = k;
+    });
+    wb.dateOverrides[baseOrig] = newDate;
+    saveData();
+    invalidateSchedule();
+    render();
+    showToast('📌 날짜를 ' + newDate + '(으)로 옮겼어요');
+  }
+
+  // Right-click (or long-press, on touch browsers that map it to contextmenu)
+  // on a calendar chip/row opens a small menu: edit the item, or postpone
+  // just this occurrence to the next scheduled day.
+  var contextMenuEl = document.getElementById('contextMenu');
+  var contextMenuKey = null;
+  var contextMenuRoutineId = null;
+  var contextMenuRoutineDate = null;
+  function openRoutineContextMenu(routineId, iso, x, y){
+    var postponeBtn = document.getElementById('ctxPostpone');
+    var editDayBtn = document.getElementById('ctxEditDay');
+    var editBtn = document.getElementById('ctxEdit');
+    var deleteBtn = document.getElementById('ctxDelete');
+    var deleteAllBtn = document.getElementById('ctxDeleteAll');
+    contextMenuKey = null;
+    contextMenuRoutineId = routineId;
+    contextMenuRoutineDate = iso;
+    postponeBtn.style.display = 'none';
+    editDayBtn.style.display = 'none';
+    editBtn.style.display = '';
+    editBtn.textContent = '✏️ 수정하기';
+    deleteBtn.style.display = '';
+    deleteBtn.textContent = '🗑 이 날짜만 삭제';
+    deleteAllBtn.style.display = '';
+    deleteAllBtn.textContent = '🗑 전체 삭제';
+    openContextMenu(x, y);
+  }
+  document.getElementById('viewContainer').addEventListener('contextmenu', function(e){
+    var postponeBtn = document.getElementById('ctxPostpone');
+    var editDayBtn = document.getElementById('ctxEditDay');
+    var editBtn = document.getElementById('ctxEdit');
+    var deleteBtn = document.getElementById('ctxDelete');
+    var deleteAllBtn = document.getElementById('ctxDeleteAll');
+    var routineEl = e.target.closest('.routine-row');
+    if(routineEl){
+      e.preventDefault();
+      openRoutineContextMenu(routineEl.getAttribute('data-routine-id'), routineEl.getAttribute('data-date'), e.clientX, e.clientY);
+      return;
+    }
+    var el = e.target.closest('.chip, .item-row, .event-banner');
+    if(!el) return;
+    e.preventDefault();
+    var key = el.getAttribute('data-key');
+    if(!key) return;
+    contextMenuKey = key;
+    contextMenuRoutineId = null;
+    contextMenuRoutineDate = null;
+    var workbookId = key.split('|')[1];
+    var wb = workbooks.find(function(w){ return w.id === workbookId; });
+    deleteBtn.style.display = '';
+    deleteAllBtn.textContent = '🗑 전체 지우기';
+    if(wb && wb.kind === 'event'){
+      postponeBtn.style.display = 'none';
+      var isMultiDay = wb.startDate !== wb.endDate;
+      editDayBtn.style.display = isMultiDay ? '' : 'none';
+      editBtn.textContent = isMultiDay ? '📅 전체 수정하기' : '✏️ 수정하기';
+      deleteBtn.textContent = isMultiDay ? '🗑 이 날짜 지우기' : '🗑 지우기';
+      // A single-day event's "지우기" already deletes the whole item, so a
+      // separate "전체 지우기" would be redundant there.
+      deleteAllBtn.style.display = isMultiDay ? '' : 'none';
+    } else {
+      postponeBtn.style.display = '';
+      editDayBtn.style.display = 'none';
+      editBtn.textContent = '✏️ 수정하기';
+      deleteBtn.textContent = '🗑 지우기';
+      deleteAllBtn.style.display = '';
+    }
+    openContextMenu(e.clientX, e.clientY);
+  });
+  function openContextMenu(x, y){
+    contextMenuEl.style.left = x + 'px';
+    contextMenuEl.style.top = y + 'px';
+    contextMenuEl.classList.remove('hidden');
+    requestAnimationFrame(function(){
+      var rect = contextMenuEl.getBoundingClientRect();
+      var maxLeft = Math.max(8, window.innerWidth - rect.width - 8);
+      var maxTop = Math.max(8, window.innerHeight - rect.height - 8);
+      if(rect.left > maxLeft) contextMenuEl.style.left = maxLeft + 'px';
+      if(rect.top > maxTop) contextMenuEl.style.top = maxTop + 'px';
+    });
+  }
+  function closeContextMenu(){
+    contextMenuEl.classList.add('hidden');
+    contextMenuKey = null;
+    contextMenuRoutineId = null;
+    contextMenuRoutineDate = null;
+  }
+  document.addEventListener('click', function(e){
+    if(!contextMenuEl.classList.contains('hidden') && !contextMenuEl.contains(e.target)){
+      closeContextMenu();
+    }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') closeContextMenu();
+  });
+  document.getElementById('ctxEdit').addEventListener('click', function(){
+    if(contextMenuRoutineId){
+      var routine = routines.find(function(r){ return r.id === contextMenuRoutineId; });
+      closeContextMenu();
+      if(routine){ openRoutineEditor(routine, routine.startDate); }
+      return;
+    }
+    if(!contextMenuKey) return;
+    var workbookId = contextMenuKey.split('|')[1];
+    var wb = workbooks.find(function(w){ return w.id === workbookId; });
+    closeContextMenu();
+    if(wb){ openModal(wb.kind || 'book'); fillFormForEdit(wb); }
+  });
+  document.getElementById('ctxEditDay').addEventListener('click', function(){
+    var key = contextMenuKey;
+    closeContextMenu();
+    if(key) splitEventDay(key);
+  });
+  document.getElementById('ctxPostpone').addEventListener('click', function(){
+    var key = contextMenuKey;
+    closeContextMenu();
+    if(key) postponeOccurrence(key);
+  });
+  document.getElementById('ctxDelete').addEventListener('click', function(){
+    if(contextMenuRoutineId){
+      var delRoutineId = contextMenuRoutineId, delRoutineDate = contextMenuRoutineDate;
+      closeContextMenu();
+      if(delRoutineId && delRoutineDate) deleteRoutineOccurrence(delRoutineId, delRoutineDate);
+      return;
+    }
+    var key = contextMenuKey;
+    closeContextMenu();
+    if(key) deleteOccurrence(key);
+  });
+  document.getElementById('ctxDeleteAll').addEventListener('click', function(){
+    if(contextMenuRoutineId){
+      var allRoutineId = contextMenuRoutineId;
+      closeContextMenu();
+      if(allRoutineId) deleteRoutine(allRoutineId);
+      return;
+    }
+    var key = contextMenuKey;
+    closeContextMenu();
+    if(!key) return;
+    var workbookId = key.split('|')[1];
+    deleteWorkbookById(workbookId);
+  });
+  // Finds the next date after `afterISO` whose weekday matches one of the
+  // class's weekly time slots — used to add exactly one makeup session when
+  // postponing a class (so the total session count doesn't shrink).
+  function findNextMatchingDate(afterISO, weeklySchedule){
+    var cursor = fromISO(afterISO);
+    cursor.setDate(cursor.getDate()+1);
+    var guard = 0;
+    while(guard < 400){
+      guard++;
+      var dow = cursor.getDay();
+      if(weeklySchedule.some(function(e){ return e.day === dow; })) return toISO(cursor);
+      cursor.setDate(cursor.getDate()+1);
+    }
+    return afterISO;
+  }
+  // Extracts a book's series identity from its name ("연산 1권" -> key
+  // shared with "연산 2권", num 1). Returns null for non-numbered names.
+  function seriesKeyOf(name){
+    var m = name.match(/^(.*?)(\d+)(\D*)$/);
+    if(!m) return null;
+    return { key: m[1] + '\u0000' + m[3], num: parseInt(m[2], 10) };
+  }
+  // Shifts every date field on a book (segments, skipDates, dateOverrides,
+  // and endDate if present) forward by deltaDays, preserving its internal
+  // shape — used to push a whole later series volume back by the same
+  // amount the previous volume was delayed by.
+  function shiftBookDates(wb, deltaDays){
+    if(wb.segments){
+      wb.segments.forEach(function(seg){
+        seg.startDate = toISO(addDays(fromISO(seg.startDate), deltaDays));
+      });
+    }
+    if(wb.endDate){
+      wb.endDate = toISO(addDays(fromISO(wb.endDate), deltaDays));
+    }
+    if(wb.skipDates && wb.skipDates.length){
+      wb.skipDates = wb.skipDates.map(function(d){ return toISO(addDays(fromISO(d), deltaDays)); });
+    }
+    if(wb.dateOverrides){
+      var shifted = {};
+      Object.keys(wb.dateOverrides).forEach(function(k){
+        shifted[toISO(addDays(fromISO(k), deltaDays))] = toISO(addDays(fromISO(wb.dateOverrides[k]), deltaDays));
+      });
+      wb.dateOverrides = shifted;
+    }
+  }
+  // Like findNextMatchingDate but for a book's weekday segments instead of a
+  // class's weeklySchedule — used to extend an endDate-bounded book's end
+  // date by one session when postponing, so a makeup slot exists.
+  function findNextMatchingDateForBook(afterISO, segments){
+    var cursor = fromISO(afterISO);
+    cursor.setDate(cursor.getDate()+1);
+    var guard = 0;
+    while(guard < 400){
+      guard++;
+      var days = segmentDaysForDate(segments, cursor);
+      if(days.indexOf(cursor.getDay()) !== -1) return toISO(cursor);
+      cursor.setDate(cursor.getDate()+1);
+    }
+    return afterISO;
+  }
+  // Marks this specific date as skipped for this workbook/class, so the
+  // schedule generator moves that occurrence (and everything after it) one
+  // slot later — "1회차 미루기". For round-count-bounded books this
+  // naturally happens since the loop keeps searching for a matching date
+  // until totalRounds is met. For endDate-bounded books and classes (bounded
+  // by a date, not a count) we extend endDate by one matching session so a
+  // makeup slot exists. If the book belongs to a numbered series ("연산
+  // 1권", "2권", ...), every later volume is shifted forward by exactly how
+  // much this book's own end date moved, so the whole series stays
+  // continuous instead of only this one book slipping.
+  function postponeOccurrence(key){
+    var parts = key.split('|');
+    var iso = parts[0], workbookId = parts[1];
+    var wb = workbooks.find(function(w){ return w.id === workbookId; });
+    if(!wb) return;
+    if(!confirm('이 회차를 다음 학습일로 미룰까요? 이후 일정(같은 시리즈 포함)이 하루씩 뒤로 밀려요.')) return;
+    var oldEnd = wb.kind === 'book' ? computeEndDate(wb) : null;
+    if(!wb.skipDates) wb.skipDates = [];
+    if(wb.skipDates.indexOf(iso) === -1) wb.skipDates.push(iso);
+    if(wb.kind === 'class' && wb.weeklySchedule && wb.weeklySchedule.length){
+      wb.endDate = findNextMatchingDate(wb.endDate, wb.weeklySchedule);
+    } else if(wb.kind === 'book' && !wb.totalRounds && wb.endDate && wb.segments){
+      wb.endDate = findNextMatchingDateForBook(wb.endDate, wb.segments);
+    }
+    var seriesShifted = false;
+    if(wb.kind === 'book' && oldEnd){
+      var newEnd = computeEndDate(wb);
+      if(oldEnd !== '-' && newEnd !== '-'){
+        var deltaDays = Math.round((fromISO(newEnd) - fromISO(oldEnd)) / 86400000);
+        if(deltaDays > 0){
+          var info = seriesKeyOf(wb.name);
+          if(info){
+            workbooks.forEach(function(w){
+              if(w.id === wb.id || w.kind !== 'book') return;
+              var otherInfo = seriesKeyOf(w.name);
+              if(otherInfo && otherInfo.key === info.key && otherInfo.num > info.num){
+                shiftBookDates(w, deltaDays);
+                seriesShifted = true;
+              }
+            });
+          }
+        }
+      }
+    }
+    saveData();
+    invalidateSchedule();
+    render();
+    showToast(seriesShifted ? '⏭ 이 회차와 이후 시리즈 전체를 다음 일정으로 미뤘어요' : '⏭ 1회차를 다음 학습일로 미뤘어요');
+  }
+  // "지우기": permanently removes just this one occurrence — unlike postpone,
+  // nothing is added to make up for it. Books: skip the date AND reduce
+  // totalRounds by one (otherwise the generator would search for a
+  // replacement date, which is exactly what postpone does instead). Classes:
+  // skipping alone is enough, since they're bounded by endDate, not a count.
+  // Single-day events: deletes the whole item, since it has no other day.
+  function deleteOccurrence(key){
+    var parts = key.split('|');
+    var iso = parts[0], workbookId = parts[1];
+    var wb = workbooks.find(function(w){ return w.id === workbookId; });
+    if(!wb) return;
+    if(wb.kind === 'event' && wb.startDate === wb.endDate){
+      deleteWorkbookById(wb.id);
+      return;
+    }
+    if(!confirm('이 날짜의 일정을 지울까요? 이 항목만 사라지고 나머지는 그대로 유지돼요.')) return;
+    if(!wb.skipDates) wb.skipDates = [];
+    if(wb.skipDates.indexOf(iso) === -1) wb.skipDates.push(iso);
+    if(wb.kind === 'book' || !wb.kind){
+      if(wb.totalRounds > 1) wb.totalRounds -= 1;
+    }
+    var prefix = iso+'|'+workbookId+'|';
+    Object.keys(completed).forEach(function(k){ if(k.indexOf(prefix) === 0) delete completed[k]; });
+    if(wb.dateOverrides) delete wb.dateOverrides[iso];
+    saveData();
+    invalidateSchedule();
+    render();
+    showToast('🗑 삭제했어요');
+  }
+  // "해당일만 수정하기": excludes just this one date from the multi-day
+  // event's range (via skipDates, so the rest of the range is untouched),
+  // then opens the add-form pre-filled as a new standalone one-day event on
+  // that date so it can be renamed/retimed independently of the original.
+  function splitEventDay(key){
+    var parts = key.split('|');
+    var iso = parts[0], workbookId = parts[1];
+    var wb = workbooks.find(function(w){ return w.id === workbookId; });
+    if(!wb || wb.kind !== 'event') return;
+    if(!confirm('"'+iso+'" 하루만 원래 일정에서 떼어내어 따로 수정할까요?')) return;
+    if(!wb.skipDates) wb.skipDates = [];
+    if(wb.skipDates.indexOf(iso) === -1) wb.skipDates.push(iso);
+    saveData();
+    invalidateSchedule();
+    render();
+    openModal('event');
+    fillFormForEventDaySplit(wb, iso);
+    showToast('📌 '+iso+'을(를) 별도 일정으로 분리했어요 — 내용을 수정해보세요');
+  }
+
+  // ---------- toolbar nav ----------
+  document.querySelectorAll('.tab').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      currentView = btn.getAttribute('data-view');
+      clearDaySelection();
+      updateTabsUI();
+      render();
+    });
+  });
+  document.getElementById('prevBtn').addEventListener('click', function(){
+    if(currentView === 'month') currentDate = addMonths(currentDate,-1);
+    else if(currentView === 'week') currentDate = addDays(currentDate,-7);
+    else if(currentView === 'day') currentDate = addDays(currentDate,-1);
+    else return;
+    clearDaySelection();
+    render();
+  });
+  document.getElementById('nextBtn').addEventListener('click', function(){
+    if(currentView === 'month') currentDate = addMonths(currentDate,1);
+    else if(currentView === 'week') currentDate = addDays(currentDate,7);
+    else if(currentView === 'day') currentDate = addDays(currentDate,1);
+    else return;
+    clearDaySelection();
+    render();
+  });
+  document.getElementById('todayBtn').addEventListener('click', function(){
+    if(currentView === 'list') return;
+    currentDate = new Date();
+    clearDaySelection();
+    render();
+  });
+
+  // ---------- print ----------
+  function preparePrintPageSize(){
+    var style = document.getElementById('pageStyle');
+    if(!style){
+      style = document.createElement('style');
+      style.id = 'pageStyle';
+      document.head.appendChild(style);
+    }
+    var size = (currentView === 'month' || currentView === 'week') ? 'A4 landscape' : 'A4 portrait';
+    style.textContent = '@page{ size:'+size+'; margin:14mm; }';
+  }
+  document.getElementById('printBtn').addEventListener('click', function(){
+    preparePrintPageSize();
+    window.print();
+  });
+  window.addEventListener('beforeprint', preparePrintPageSize);
+
+  // ---------- manage modal ----------
+  var modal = document.getElementById('manageModal');
+  function openModal(kind){
+    modal.classList.remove('hidden');
+    if(kind === 'book' || kind === 'class' || kind === 'event'){
+      modalListKind = kind;
+      document.querySelectorAll('.modal-list-tab').forEach(function(b){
+        b.classList.toggle('active', b.getAttribute('data-kind') === kind);
+      });
+    }
+    renderWorkbookList();
+  }
+  function closeModal(){
+    modal.classList.add('hidden');
+    resetForm();
+  }
+  document.getElementById('manageBtn').addEventListener('click', openModal);
+  document.getElementById('emptyBannerBtn').addEventListener('click', openModal);
+  document.getElementById('closeManage').addEventListener('click', closeModal);
+  document.getElementById('modalListTabs').addEventListener('click', function(e){
+    var btn = e.target.closest('.modal-list-tab');
+    if(!btn) return;
+    modalListKind = btn.getAttribute('data-kind');
+    document.querySelectorAll('.modal-list-tab').forEach(function(b){
+      b.classList.toggle('active', b === btn);
+    });
+    renderWorkbookList();
+  });
+  modal.addEventListener('click', function(e){
+    if(e.target === modal) closeModal();
+  });
+  document.getElementById('exportBtn').addEventListener('click', exportBackup);
+  document.getElementById('importBtn').addEventListener('click', function(){
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0];
+    if(file) importBackupFile(file);
+    e.target.value = '';
+  });
+
+  // ---------- settings modal (multiple user profiles) ----------
+  var settingsModal = document.getElementById('settingsModal');
+  var settingsForm = document.getElementById('settingsForm');
+  function resetProfileForm(){
+    settingsForm.reset();
+    editingProfileId = null;
+    document.getElementById('submitProfileBtn').textContent = '추가하기';
+    document.getElementById('cancelProfileEditBtn').style.display = 'none';
+  }
+  function fillProfileFormForEdit(p){
+    editingProfileId = p.id;
+    settingsForm.userName.value = p.name;
+    settingsForm.userBirth.value = p.birth || '';
+    document.getElementById('submitProfileBtn').textContent = '수정 완료';
+    document.getElementById('cancelProfileEditBtn').style.display = 'inline-block';
+  }
+  function renderUserProfileList(){
+    var listEl = document.getElementById('userProfileList');
+    if(userProfiles.length === 0){
+      listEl.innerHTML = '<p class="muted">등록된 사용자가 없어요. 아래에서 추가해보세요.</p>';
+      return;
+    }
+    listEl.innerHTML = userProfiles.map(function(p){
+      var isActive = p.id === activeUserId;
+      return '<div class="wb-item">'+
+        '<span class="wb-color" style="background:'+(isActive ? 'var(--stamp)' : 'var(--line)')+'"></span>'+
+        '<div class="wb-info"><strong>'+escapeHTML(p.name)+(isActive ? ' <span class="list-card-kind">활성</span>' : '')+'</strong>'+
+        '<span>생년월일 '+(p.birth || '-')+'</span></div>'+
+        '<div class="wb-actions">'+
+        (isActive ? '' : '<button type="button" class="set-active-user" data-id="'+p.id+'">활성으로</button>')+
+        '<button type="button" class="edit-user" data-id="'+p.id+'">수정</button>'+
+        '<button type="button" class="del-user" data-id="'+p.id+'">삭제</button>'+
+        '</div></div>';
+    }).join('');
+  }
+  document.getElementById('userProfileList').addEventListener('click', function(e){
+    var setBtn = e.target.closest('.set-active-user');
+    var editBtn = e.target.closest('.edit-user');
+    var delBtn = e.target.closest('.del-user');
+    if(setBtn){
+      activeUserId = setBtn.getAttribute('data-id');
+      saveUserProfile();
+      updateAppTitle();
+      renderUserProfileList();
+      showToast('✅ 활성 사용자를 변경했어요');
+    } else if(editBtn){
+      var p = userProfiles.find(function(u){ return u.id === editBtn.getAttribute('data-id'); });
+      if(p) fillProfileFormForEdit(p);
+    } else if(delBtn){
+      var id = delBtn.getAttribute('data-id');
+      var target = userProfiles.find(function(u){ return u.id === id; });
+      if(!target) return;
+      if(confirm('"'+target.name+'" 사용자를 삭제할까요?')){
+        userProfiles = userProfiles.filter(function(u){ return u.id !== id; });
+        if(activeUserId === id) activeUserId = userProfiles[0] ? userProfiles[0].id : null;
+        saveUserProfile();
+        updateAppTitle();
+        renderUserProfileList();
+        if(editingProfileId === id) resetProfileForm();
+      }
+    }
+  });
+  function openSettingsModal(){
+    resetProfileForm();
+    renderUserProfileList();
+    settingsModal.classList.remove('hidden');
+  }
+  function closeSettingsModal(){
+    settingsModal.classList.add('hidden');
+  }
+  document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
+  document.getElementById('closeSettings').addEventListener('click', closeSettingsModal);
+  document.getElementById('cancelProfileEditBtn').addEventListener('click', resetProfileForm);
+  settingsModal.addEventListener('click', function(e){
+    if(e.target === settingsModal) closeSettingsModal();
+  });
+  settingsForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = settingsForm.userName.value.trim();
+    var birth = settingsForm.userBirth.value;
+    if(!name || !birth){
+      alert('이름과 생년월일을 모두 입력해주세요.');
+      return;
+    }
+    if(editingProfileId){
+      var p = userProfiles.find(function(u){ return u.id === editingProfileId; });
+      if(p){ p.name = name; p.birth = birth; }
+    } else {
+      var newProfile = { id: 'user_' + Date.now() + '_' + Math.floor(Math.random()*1000), name: name, birth: birth };
+      userProfiles.push(newProfile);
+      if(!activeUserId) activeUserId = newProfile.id; // first registered user becomes active automatically
+    }
+    saveUserProfile();
+    updateAppTitle();
+    renderUserProfileList();
+    resetProfileForm();
+    showToast('✅ 사용자 정보를 저장했어요');
+  });
+
+  function segmentSummary(wb){
+    return wb.segments.map(function(s){
+      var days = s.daysOfWeek.slice().sort().map(function(d){ return WEEKDAY_NAMES[d]; }).join(',');
+      return s.startDate + '~ (' + (days || '요일 없음') + ')';
+    }).join(' → ');
+  }
+  // Book summary text: weekday-based segments, plus a note about how the
+  // schedule is bounded (round count, or an end date when rounds are unset).
+  function bookScheduleSummary(wb){
+    var base = segmentSummary(wb);
+    if(!wb.totalRounds && wb.endDate) return base + ' · 종료일 ' + wb.endDate + '까지';
+    return base;
+  }
+
+  var modalListKind = 'book';
+  // Groups books that share the same name pattern ("연산 1권", "연산 2권", ...)
+  // so they sit next to each other in order (by volume number), instead of
+  // scattered based on when each was added. Non-series books keep their
+  // original relative order; a series' position is set by its first volume.
+  function sortBooksBySeries(books){
+    var groups = {};
+    var order = [];
+    books.forEach(function(wb){
+      var m = wb.name.match(/^(.*?)(\d+)(\D*)$/);
+      var key = m ? ('series:'+m[1]+'\u0000'+m[3]) : ('solo:'+wb.id);
+      if(!groups[key]){ groups[key] = []; order.push(key); }
+      groups[key].push({ num: m ? parseInt(m[2],10) : null, wb: wb });
+    });
+    var result = [];
+    order.forEach(function(key){
+      var items = groups[key];
+      items.sort(function(a,b){
+        if(a.num === null || b.num === null) return 0;
+        return a.num - b.num;
+      });
+      items.forEach(function(it){ result.push(it.wb); });
+    });
+    return result;
+  }
+  function renderWorkbookList(){
+    var listEl = document.getElementById('workbookList');
+    var filtered = workbooks.filter(function(w){ return (w.kind || 'book') === modalListKind; });
+    if(modalListKind === 'book') filtered = sortBooksBySeries(filtered);
+    if(filtered.length === 0){
+      var emptyLabel = modalListKind === 'event' ? '일정' : (modalListKind === 'class' ? '클래스' : '문제집');
+      listEl.innerHTML = '<p class="muted">등록된 '+emptyLabel+'이(가) 없어요. 아래에서 추가해보세요.</p>';
+      return;
+    }
+    listEl.innerHTML = filtered.map(function(wb){
+      var kindLabel = wb.kind === 'event' ? '일정' : (wb.kind === 'class' ? '클래스' : '문제집');
+      var meta;
+      if(wb.kind === 'event'){
+        meta = eventScheduleSummary(wb);
+      } else {
+        var end = computeEndDate(wb);
+        meta = wb.kind === 'class'
+          ? (classScheduleSummary(wb) + ' · ~'+end+' 종료 예정')
+          : (sessionCountForWorkbook(wb)+'회 · '+bookScheduleSummary(wb)+' · ~'+end+' 완료 예정');
+      }
+      return '<div class="wb-item">'+
+        '<span class="wb-color" style="background:'+wb.color+'"></span>'+
+        '<div class="wb-info"><strong>'+kindIcon(wb.kind)+' '+escapeHTML(wb.name)+'</strong>'+
+        '<span>'+kindLabel+' · '+escapeHTML(meta)+'</span></div>'+
+        '<div class="wb-actions"><button type="button" class="copy-wb" data-id="'+wb.id+'">복사</button>'+
+        '<button type="button" class="edit-wb" data-id="'+wb.id+'">수정</button>'+
+        '<button type="button" class="del-wb" data-id="'+wb.id+'">삭제</button></div>'+
+        '</div>';
+    }).join('');
+  }
+
+  function deleteWorkbookById(id){
+    var target = workbooks.find(function(w){ return w.id === id; });
+    if(!target) return;
+    if(confirm('"'+target.name+'"을(를) 삭제할까요? 관련 학습 기록도 함께 사라져요.')){
+      workbooks = workbooks.filter(function(w){ return w.id !== id; });
+      Object.keys(completed).forEach(function(k){
+        if(k.split('|')[1] === id) delete completed[k];
+      });
+      saveData();
+      invalidateSchedule();
+      renderWorkbookList();
+      render();
+      if(editingId === id) resetForm();
+    }
+  }
+
+  document.getElementById('workbookList').addEventListener('click', function(e){
+    var copyBtn = e.target.closest('.copy-wb');
+    var editBtn = e.target.closest('.edit-wb');
+    var delBtn = e.target.closest('.del-wb');
+    if(copyBtn){
+      var src = workbooks.find(function(w){ return w.id === copyBtn.getAttribute('data-id'); });
+      if(src) fillFormForCopy(src);
+    } else if(editBtn){
+      var wb = workbooks.find(function(w){ return w.id === editBtn.getAttribute('data-id'); });
+      if(wb) fillFormForEdit(wb);
+    } else if(delBtn){
+      deleteWorkbookById(delBtn.getAttribute('data-id'));
+    }
+  });
+
+  // ---------- workbook form ----------
+  var form = document.getElementById('workbookForm');
+  var colorPicker = document.getElementById('colorPicker');
+  var kindPicker = document.getElementById('kindPicker');
+  var segmentList = document.getElementById('segmentList');
+  var weeklyScheduleList = document.getElementById('weeklyScheduleList');
+  var selectedColor = COLORS[0];
+  var selectedKind = 'book';
+
+  function buildColorPicker(){
+    colorPicker.innerHTML = COLORS.map(function(c){
+      return '<button type="button" class="swatch" data-color="'+c+'" style="background:'+c+'"></button>';
+    }).join('');
+  }
+  function setSelectedColor(c){
+    selectedColor = c;
+    colorPicker.querySelectorAll('.swatch').forEach(function(sw){
+      sw.classList.toggle('selected', sw.getAttribute('data-color') === c);
+    });
+  }
+  colorPicker.addEventListener('click', function(e){
+    var sw = e.target.closest('.swatch');
+    if(sw) setSelectedColor(sw.getAttribute('data-color'));
+  });
+
+  function setSelectedKind(k){
+    selectedKind = k;
+    kindPicker.querySelectorAll('.kind-btn').forEach(function(btn){
+      btn.classList.toggle('selected', btn.getAttribute('data-kind') === k);
+    });
+    var isBook = k === 'book';
+    var isClass = k === 'class';
+    var isEvent = k === 'event';
+    document.getElementById('roundsField').style.display = isBook ? '' : 'none';
+    document.getElementById('bookSegmentsField').style.display = isBook ? '' : 'none';
+    document.getElementById('classFields').style.display = isClass ? '' : 'none';
+    document.getElementById('eventFields').style.display = isEvent ? '' : 'none';
+    if(isBook){
+      updateBookRoundsEndDateToggle();
+    } else {
+      document.getElementById('bookEndDateField').style.display = 'none';
+      form.bookEndDate.required = false;
+    }
+    if(isEvent) setEventType(selectedEventType);
+    form.totalRounds.required = false; // always optional for books now
+    form.classStartDate.required = isClass;
+    form.classEndDate.required = isClass;
+    form.eventStartDate.required = isEvent;
+    form.name.placeholder = isEvent ? '예: 여름휴가, 병원 예약' : (isClass ? '예: OO학원 국어 수업' : '예: 수학 연산 문제집');
+    if(!editingId){
+      var label = isEvent ? '일정' : (isClass ? '클래스' : '문제집');
+      document.getElementById('submitWbBtn').textContent = label + ' 추가하기';
+    }
+  }
+  kindPicker.addEventListener('click', function(e){
+    var btn = e.target.closest('.kind-btn');
+    if(btn) setSelectedKind(btn.getAttribute('data-kind'));
+  });
+
+  // ---------- book: optional round count, or an end date when rounds are left blank ----------
+  function updateBookRoundsEndDateToggle(){
+    var hasRounds = form.totalRounds.value.trim() !== '';
+    document.getElementById('bookEndDateField').style.display = hasRounds ? 'none' : '';
+    form.bookEndDate.required = !hasRounds;
+  }
+  form.totalRounds.addEventListener('input', function(){
+    if(selectedKind === 'book') updateBookRoundsEndDateToggle();
+  });
+
+  // ---------- event date/time fields: 🕐 1회성 (single day, time allowed) vs 📅 기간 (multi-day range, all-day only) ----------
+  var selectedEventType = 'single';
+  function setEventType(type){
+    selectedEventType = type;
+    document.querySelectorAll('#eventTypePicker .kind-btn').forEach(function(btn){
+      btn.classList.toggle('selected', btn.getAttribute('data-type') === type);
+    });
+    var isRange = type === 'range';
+    document.getElementById('eventStartDateLabel').textContent = isRange ? '시작일' : '날짜';
+    document.getElementById('eventEndDateField').style.display = isRange ? '' : 'none';
+    document.getElementById('eventTimeSection').style.display = isRange ? 'none' : '';
+    document.getElementById('eventTypeHint').textContent = isRange
+      ? '여행·방학처럼 여러 날에 걸친 일정이에요. 기간 일정은 시간 없이 하루 종일로 표시돼요.'
+      : '하루짜리 일정이에요. 시간을 지정할 수 있어요.';
+    form.eventEndDate.required = isRange;
+  }
+  document.getElementById('eventTypePicker').addEventListener('click', function(e){
+    var btn = e.target.closest('.kind-btn');
+    if(btn) setEventType(btn.getAttribute('data-type'));
+  });
+  function renderEventTimePickers(startVal, endVal){
+    document.getElementById('eventStartTimeGroup').innerHTML = timeSelectHTML('event-start', startVal, false);
+    document.getElementById('eventEndTimeGroup').innerHTML = timeSelectHTML('event-end', endVal, true);
+  }
+  function setEventAllDay(allDay){
+    form.eventAllDay.checked = allDay;
+    document.getElementById('eventTimeFields').style.display = allDay ? 'none' : '';
+  }
+  form.eventAllDay.addEventListener('change', function(){
+    document.getElementById('eventTimeFields').style.display = form.eventAllDay.checked ? 'none' : '';
+  });
+  function readEventTimeFromForm(){
+    if(selectedEventType === 'range' || form.eventAllDay.checked) return { start: null, end: null };
+    return {
+      start: from12h(
+        document.querySelector('.event-start-ampm').value,
+        document.querySelector('.event-start-hour').value,
+        document.querySelector('.event-start-minute').value
+      ),
+      end: from12h(
+        document.querySelector('.event-end-ampm').value,
+        document.querySelector('.event-end-hour').value,
+        document.querySelector('.event-end-minute').value
+      )
+    };
+  }
+
+  // ---------- book period segments (each has its own start date + weekdays) ----------
+  function segmentRowHTML(seg){
+    var startVal = (seg && seg.startDate) ? seg.startDate : toISO(new Date());
+    var days = (seg && seg.daysOfWeek) ? seg.daysOfWeek : [];
+    var chips = WEEKDAY_NAMES.map(function(w,i){
+      var checked = days.indexOf(i) !== -1 ? 'checked' : '';
+      return '<label class="wd-chip"><input type="checkbox" class="seg-day" value="'+i+'" '+checked+'><span>'+w+'</span></label>';
+    }).join('');
+    return '<div class="segment-row">'+
+      '<div class="segment-row-top">'+
+      '<input type="date" class="seg-start" value="'+startVal+'" required>'+
+      '<button type="button" class="remove-segment" aria-label="구간 삭제">✕</button>'+
+      '</div>'+
+      '<div class="weekday-picker">'+chips+'</div>'+
+      '</div>';
+  }
+  function renderSegments(segments){
+    segmentList.innerHTML = segments.map(segmentRowHTML).join('');
+    updateRemoveSegmentButtons();
+  }
+  function addSegmentRow(){
+    segmentList.insertAdjacentHTML('beforeend', segmentRowHTML({ startDate: toISO(new Date()), daysOfWeek: [] }));
+    updateRemoveSegmentButtons();
+    var rows = segmentList.querySelectorAll('.segment-row');
+    rows[rows.length-1].scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  function updateRemoveSegmentButtons(){
+    var rows = segmentList.querySelectorAll('.segment-row');
+    rows.forEach(function(row){
+      var btn = row.querySelector('.remove-segment');
+      btn.style.display = rows.length > 1 ? '' : 'none';
+    });
+  }
+  document.getElementById('addSegmentBtn').addEventListener('click', addSegmentRow);
+  segmentList.addEventListener('click', function(e){
+    var btn = e.target.closest('.remove-segment');
+    if(btn){
+      btn.closest('.segment-row').remove();
+      updateRemoveSegmentButtons();
+    }
+  });
+  function readSegmentsFromForm(){
+    return Array.from(segmentList.querySelectorAll('.segment-row')).map(function(row){
+      return {
+        startDate: row.querySelector('.seg-start').value,
+        daysOfWeek: Array.from(row.querySelectorAll('.seg-day:checked')).map(function(cb){ return parseInt(cb.value,10); })
+      };
+    });
+  }
+
+  // ---------- class weekly schedule (one weekday + time per row) ----------
+  // Converts a stored 24h "HH:MM" string into {ampm, hour(1-12), minute}
+  // for populating the select pickers.
+  function to12h(hhmm){
+    if(!hhmm) return null;
+    var parts = hhmm.split(':');
+    var h = parseInt(parts[0],10);
+    var m = snapMinute(parts[1]);
+    var ampm = h < 12 ? 'AM' : 'PM';
+    var hour12 = h % 12;
+    if(hour12 === 0) hour12 = 12;
+    return { ampm: ampm, hour: hour12, minute: m };
+  }
+  // Rounds a minute string/number to the nearest 10-minute step (00-50),
+  // since the picker only offers minutes in steps of 10.
+  function snapMinute(m){
+    var n = Math.round(parseInt(m,10)/10)*10 % 60;
+    if(isNaN(n)) n = 0;
+    return pad(n);
+  }
+  // Combines picker values back into a stored 24h "HH:MM" string. Returns
+  // null if ampm is empty (used for an optional, unset end time).
+  function from12h(ampm, hour12, minute){
+    if(!ampm) return null;
+    var h = parseInt(hour12,10) % 12;
+    if(ampm === 'PM') h += 12;
+    return pad(h) + ':' + minute;
+  }
+  // Renders the AM/PM + hour(1-12) + minute(:00,:10...:50) picker group.
+  // allowEmpty adds a leading "설정 안 함" option to the AM/PM select, used
+  // for the optional end time.
+  function timeSelectHTML(cls, value, allowEmpty){
+    var t = to12h(value);
+    var ampm = t ? t.ampm : (allowEmpty ? '' : 'AM');
+    var hour = t ? t.hour : 9;
+    var minute = t ? t.minute : '00';
+    var ampmOptions = (allowEmpty ? '<option value=""'+(ampm===''?' selected':'')+'>설정 안 함</option>' : '') +
+      '<option value="AM"'+(ampm==='AM'?' selected':'')+'>오전</option>'+
+      '<option value="PM"'+(ampm==='PM'?' selected':'')+'>오후</option>';
+    var hourOptions = '';
+    for(var h=1; h<=12; h++){
+      hourOptions += '<option value="'+h+'"'+(h===hour?' selected':'')+'>'+h+'시</option>';
+    }
+    var minuteOptions = '';
+    for(var m=0; m<60; m+=10){
+      var mm = pad(m);
+      minuteOptions += '<option value="'+mm+'"'+(mm===minute?' selected':'')+'>'+mm+'분</option>';
+    }
+    return '<div class="time-select-group">'+
+      '<select class="'+cls+'-ampm">'+ampmOptions+'</select>'+
+      '<select class="'+cls+'-hour">'+hourOptions+'</select>'+
+      '<select class="'+cls+'-minute">'+minuteOptions+'</select>'+
+      '</div>';
+  }
+
+  function weeklyRowHTML(entry){
+    var day = (entry && typeof entry.day === 'number') ? entry.day : 1;
+    var start = (entry && entry.start) || '';
+    var end = (entry && entry.end) || '';
+    var dayOptions = WEEKDAY_NAMES.map(function(w,i){
+      return '<option value="'+i+'"'+(i===day?' selected':'')+'>'+w+'요일</option>';
+    }).join('');
+    return '<div class="weekly-row">'+
+      '<div class="weekly-row-top">'+
+      '<select class="weekly-day">'+dayOptions+'</select>'+
+      '<button type="button" class="remove-weekly" aria-label="요일 삭제">✕</button>'+
+      '</div>'+
+      '<div class="weekly-time-block">'+
+      '<div class="weekly-time-label">시작 시간</div>'+timeSelectHTML('weekly-start', start, false)+
+      '<div class="weekly-time-label">종료 시간</div>'+timeSelectHTML('weekly-end', end, true)+
+      '</div>'+
+      '</div>';
+  }
+  function renderWeeklyRows(entries){
+    weeklyScheduleList.innerHTML = entries.map(weeklyRowHTML).join('');
+    updateRemoveWeeklyButtons();
+  }
+  function addWeeklyRow(){
+    weeklyScheduleList.insertAdjacentHTML('beforeend', weeklyRowHTML({ day: 1, start: '', end: '' }));
+    updateRemoveWeeklyButtons();
+    var rows = weeklyScheduleList.querySelectorAll('.weekly-row');
+    rows[rows.length-1].scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+  function updateRemoveWeeklyButtons(){
+    var rows = weeklyScheduleList.querySelectorAll('.weekly-row');
+    rows.forEach(function(row){
+      var btn = row.querySelector('.remove-weekly');
+      btn.style.display = rows.length > 1 ? '' : 'none';
+    });
+  }
+  document.getElementById('addWeeklyRowBtn').addEventListener('click', addWeeklyRow);
+  weeklyScheduleList.addEventListener('click', function(e){
+    var btn = e.target.closest('.remove-weekly');
+    if(btn){
+      btn.closest('.weekly-row').remove();
+      updateRemoveWeeklyButtons();
+    }
+  });
+  function readWeeklyScheduleFromForm(){
+    return Array.from(weeklyScheduleList.querySelectorAll('.weekly-row')).map(function(row){
+      return {
+        day: parseInt(row.querySelector('.weekly-day').value, 10),
+        start: from12h(
+          row.querySelector('.weekly-start-ampm').value,
+          row.querySelector('.weekly-start-hour').value,
+          row.querySelector('.weekly-start-minute').value
+        ),
+        end: from12h(
+          row.querySelector('.weekly-end-ampm').value,
+          row.querySelector('.weekly-end-hour').value,
+          row.querySelector('.weekly-end-minute').value
+        )
+      };
+    });
+  }
+
+  function resetForm(){
+    form.reset();
+    editingId = null;
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    setSelectedColor(COLORS[workbooks.length % COLORS.length]);
+    setEventType('single');
+    setSelectedKind('book');
+    renderSegments([{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+    renderWeeklyRows([{ day: 1, start: '', end: '' }]);
+    setEventAllDay(true);
+    renderEventTimePickers('', '');
+  }
+
+  function fillFormForEdit(wb){
+    editingId = wb.id;
+    form.name.value = wb.name;
+    form.memo.value = wb.memo || '';
+    setSelectedColor(wb.color);
+    setSelectedKind(wb.kind || 'book');
+    if(wb.kind === 'event'){
+      setEventType(wb.startDate === wb.endDate ? 'single' : 'range');
+      form.eventStartDate.value = wb.startDate || '';
+      form.eventEndDate.value = wb.endDate || '';
+      setEventAllDay(!wb.startTime);
+      renderEventTimePickers(wb.startTime || '', wb.endTime || '');
+      renderSegments([{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+      renderWeeklyRows([{ day: 1, start: '', end: '' }]);
+    } else if(wb.kind === 'class'){
+      form.classStartDate.value = wb.startDate || '';
+      form.classEndDate.value = wb.endDate || '';
+      renderWeeklyRows(wb.weeklySchedule && wb.weeklySchedule.length ? wb.weeklySchedule : [{ day: 1, start: '', end: '' }]);
+      renderSegments([{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+    } else {
+      form.totalRounds.value = wb.totalRounds || '';
+      form.bookEndDate.value = wb.endDate || '';
+      updateBookRoundsEndDateToggle();
+      renderSegments(wb.segments && wb.segments.length ? wb.segments : [{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+      renderWeeklyRows([{ day: 1, start: '', end: '' }]);
+    }
+    document.getElementById('submitWbBtn').textContent = '수정 완료';
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    form.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  // If the name ends in a number ("연산 1권", "Book 2"), bumps it by one so
+  // registering the next book in a series doesn't need retyping the name.
+  function suggestNextName(name){
+    var m = name.match(/^(.*?)(\d+)(\D*)$/);
+    if(!m) return name;
+    return m[1] + (parseInt(m[2],10) + 1) + m[3];
+  }
+
+  // Pre-fills the form from an existing workbook/class/event as a NEW entry —
+  // same series, same color/kind, but starting right after the source
+  // item's schedule ends. Used for "같은 시리즈 이어 등록하기".
+  function fillFormForCopy(wb){
+    editingId = null;
+    form.name.value = suggestNextName(wb.name);
+    form.memo.value = wb.memo || '';
+    setSelectedColor(wb.color);
+    setSelectedKind(wb.kind || 'book');
+    var end = computeEndDate(wb);
+    var nextStart = end !== '-' ? toISO(addDays(fromISO(end), 1)) : toISO(new Date());
+    if(wb.kind === 'event'){
+      var isRangeEvent = wb.startDate !== wb.endDate;
+      setEventType(isRangeEvent ? 'range' : 'single');
+      form.eventStartDate.value = nextStart;
+      if(isRangeEvent){
+        var eventDays = Math.max(1, Math.round((fromISO(wb.endDate) - fromISO(wb.startDate)) / 86400000));
+        form.eventEndDate.value = toISO(addDays(fromISO(nextStart), eventDays));
+      } else {
+        form.eventEndDate.value = nextStart;
+      }
+      setEventAllDay(!wb.startTime);
+      renderEventTimePickers(wb.startTime || '', wb.endTime || '');
+      renderSegments([{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+      renderWeeklyRows([{ day: 1, start: '', end: '' }]);
+    } else if(wb.kind === 'class'){
+      form.classStartDate.value = nextStart;
+      form.classEndDate.value = '';
+      renderWeeklyRows(wb.weeklySchedule && wb.weeklySchedule.length
+        ? wb.weeklySchedule.map(function(e){ return { day: e.day, start: e.start, end: e.end }; })
+        : [{ day: 1, start: '', end: '' }]);
+      renderSegments([{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+    } else {
+      form.totalRounds.value = wb.totalRounds || '';
+      if(!wb.totalRounds && wb.endDate){
+        var origDays = Math.max(1, Math.round((fromISO(wb.endDate) - fromISO(wb.segments[0].startDate)) / 86400000));
+        form.bookEndDate.value = toISO(addDays(fromISO(nextStart), origDays));
+      } else {
+        form.bookEndDate.value = '';
+      }
+      updateBookRoundsEndDateToggle();
+      var lastSeg = wb.segments[wb.segments.length - 1];
+      renderSegments([{ startDate: nextStart, daysOfWeek: lastSeg.daysOfWeek.slice() }]);
+      renderWeeklyRows([{ day: 1, start: '', end: '' }]);
+    }
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    form.name.focus();
+    form.name.select();
+    form.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  // Pre-fills the form as a NEW standalone one-day event on `iso`, copying
+  // the source event's name/color/time so the user can then rename/retime
+  // it independently. Used by "해당일만 수정하기" on a multi-day event.
+  function fillFormForEventDaySplit(wb, iso){
+    editingId = null;
+    form.name.value = wb.name;
+    form.memo.value = wb.memo || '';
+    setSelectedColor(wb.color);
+    setSelectedKind('event');
+    setEventType('single');
+    form.eventStartDate.value = iso;
+    form.eventEndDate.value = iso;
+    setEventAllDay(!wb.startTime);
+    renderEventTimePickers(wb.startTime || '', wb.endTime || '');
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    form.name.focus();
+    form.name.select();
+    form.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = form.name.value.trim();
+    var memo = form.memo.value.trim();
+    var wasEditing = !!editingId;
+
+    if(selectedKind === 'class'){
+      var classStartDate = form.classStartDate.value;
+      var classEndDate = form.classEndDate.value;
+      var weeklySchedule = readWeeklyScheduleFromForm();
+      var hasInvalidWeekly = weeklySchedule.some(function(w){ return isNaN(w.day) || !w.start; });
+      if(!name || !classStartDate || !classEndDate || weeklySchedule.length === 0 || hasInvalidWeekly){
+        alert('이름, 시작일, 종료일, 그리고 각 요일의 시작 시간을 모두 입력해주세요.');
+        return;
+      }
+      if(classStartDate > classEndDate){
+        alert('종료일은 시작일보다 같거나 나중이어야 해요.');
+        return;
+      }
+      if(editingId){
+        var wb = workbooks.find(function(w){ return w.id === editingId; });
+        if(wb){
+          wb.name = name; wb.color = selectedColor; wb.kind = 'class'; wb.memo = memo;
+          wb.startDate = classStartDate; wb.endDate = classEndDate; wb.weeklySchedule = weeklySchedule;
+          delete wb.totalRounds; delete wb.segments;
+        }
+      } else {
+        workbooks.push({
+          id: 'wb_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+          name: name, color: selectedColor, kind: 'class', memo: memo,
+          startDate: classStartDate, endDate: classEndDate, weeklySchedule: weeklySchedule
+        });
+      }
+    } else if(selectedKind === 'event'){
+      var eventStartDate = form.eventStartDate.value;
+      var eventEndDate = selectedEventType === 'range' ? form.eventEndDate.value : eventStartDate;
+      var eventTime = readEventTimeFromForm();
+      if(!name || !eventStartDate || !eventEndDate){
+        alert(selectedEventType === 'range' ? '일정명, 시작일, 종료일을 모두 입력해주세요.' : '일정명과 날짜를 입력해주세요.');
+        return;
+      }
+      if(eventStartDate > eventEndDate){
+        alert('종료일은 시작일보다 같거나 나중이어야 해요.');
+        return;
+      }
+      if(selectedEventType === 'single' && !form.eventAllDay.checked && !eventTime.start){
+        alert('시작 시간을 입력하거나, "하루 종일"을 선택해주세요.');
+        return;
+      }
+      if(editingId){
+        var wbEvent = workbooks.find(function(w){ return w.id === editingId; });
+        if(wbEvent){
+          wbEvent.name = name; wbEvent.color = selectedColor; wbEvent.kind = 'event'; wbEvent.memo = memo;
+          wbEvent.startDate = eventStartDate; wbEvent.endDate = eventEndDate;
+          wbEvent.startTime = eventTime.start; wbEvent.endTime = eventTime.end;
+          delete wbEvent.totalRounds; delete wbEvent.segments; delete wbEvent.weeklySchedule;
+        }
+      } else {
+        workbooks.push({
+          id: 'wb_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+          name: name, color: selectedColor, kind: 'event', memo: memo,
+          startDate: eventStartDate, endDate: eventEndDate,
+          startTime: eventTime.start, endTime: eventTime.end
+        });
+      }
+    } else {
+      var totalRoundsRaw = form.totalRounds.value.trim();
+      var totalRounds = totalRoundsRaw ? parseInt(totalRoundsRaw, 10) : null;
+      var bookEndDate = totalRounds ? null : form.bookEndDate.value;
+      var segments = readSegmentsFromForm();
+      var hasInvalidSegment = segments.some(function(s){ return !s.startDate; });
+      var hasAnyStudyDays = segments.some(function(s){ return s.daysOfWeek.length > 0; });
+      if(!name || segments.length === 0 || hasInvalidSegment || !hasAnyStudyDays){
+        alert('이름, 그리고 각 구간의 시작일을 입력해주세요. (최소 한 구간에는 요일을 선택해야 해요 — 요일 없는 구간은 쉬는 기간이 돼요)');
+        return;
+      }
+      if(!totalRounds && !bookEndDate){
+        alert('총 회차 수를 입력하거나, 종료일을 선택해주세요.');
+        return;
+      }
+      if(totalRounds && totalRounds < 1){
+        alert('총 회차 수는 1 이상이어야 해요.');
+        return;
+      }
+      segments.sort(function(a,b){ return a.startDate < b.startDate ? -1 : (a.startDate > b.startDate ? 1 : 0); });
+      if(bookEndDate && bookEndDate < segments[0].startDate){
+        alert('종료일은 첫 구간의 시작일보다 같거나 나중이어야 해요.');
+        return;
+      }
+      if(editingId){
+        var wbBook = workbooks.find(function(w){ return w.id === editingId; });
+        if(wbBook){
+          wbBook.name = name; wbBook.color = selectedColor; wbBook.kind = 'book'; wbBook.memo = memo;
+          wbBook.segments = segments;
+          if(totalRounds){ wbBook.totalRounds = totalRounds; delete wbBook.endDate; }
+          else { delete wbBook.totalRounds; wbBook.endDate = bookEndDate; }
+          delete wbBook.weeklySchedule;
+        }
+      } else {
+        var newBook = {
+          id: 'wb_' + Date.now() + '_' + Math.floor(Math.random()*1000),
+          name: name, color: selectedColor, kind: 'book', memo: memo,
+          segments: segments
+        };
+        if(totalRounds) newBook.totalRounds = totalRounds;
+        else newBook.endDate = bookEndDate;
+        workbooks.push(newBook);
+      }
+    }
+    saveData();
+    invalidateSchedule();
+    resetForm();
+    // Calendar refresh is wrapped so any unexpected error surfaces instead of
+    // silently leaving the calendar showing stale data.
+    try{
+      renderWorkbookList();
+      render();
+    } catch(err){
+      console.error('달력을 갱신하는 중 오류가 발생했어요:', err);
+      alert('달력을 갱신하는 중 문제가 생겼어요. 화면을 새로고침한 뒤 다시 확인해주세요.');
+    }
+    showToast(wasEditing ? '✅ 수정한 내용이 달력에 반영됐어요' : '✅ "'+name+'" 등록 완료');
+    // Editing is usually a one-off fix — close the modal automatically so the
+    // updated calendar is visible right away instead of staying hidden
+    // behind the management modal.
+    if(wasEditing) closeModal();
+  });
+
+  // ---------- init ----------
+  // Chrome (unlike Safari) needs an actual Web App Manifest — not just meta
+  // tags — to offer "Add to Home Screen" / Install. Since this is a single
+  // portable file, the manifest is built and attached as a Blob URL at
+  // runtime instead of a separate manifest.json. Note: Chrome's automatic
+  // install banner also requires HTTPS (or localhost) — it will not appear
+  // for a file opened directly from disk (file://), regardless of manifest.
+  // Chrome's manual "Add to Home screen" menu option still works from a
+  // local file even without any of this.
+  function setupWebAppManifest(){
+    try{
+      var icon = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%23C63D2F'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif'%3E%F0%9F%93%98%3C/text%3E%3C/svg%3E";
+      var manifest = {
+        name: 'Study Planner',
+        short_name: 'Study Planner',
+        start_url: '.',
+        scope: '.',
+        display: 'standalone',
+        background_color: '#EEF3F8',
+        theme_color: '#C63D2F',
+        icons: [
+          { src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+          { src: icon, sizes: 'any', type: 'image/svg+xml', purpose: 'maskable' }
+        ]
+      };
+      var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      var link = document.getElementById('pwaManifestLink');
+      if(link) link.href = URL.createObjectURL(blob);
+    } catch(e){ /* non-critical: app works fine without a manifest */ }
+  }
+
+  function init(){
+    setupWebAppManifest();
+    buildColorPicker();
+    setSelectedColor(COLORS[0]);
+    setSelectedKind('book');
+    renderSegments([{ startDate: toISO(new Date()), daysOfWeek: [] }]);
+    renderWeeklyRows([{ day: 1, start: '', end: '' }]);
+    Promise.all([loadData(), loadUserProfile()]).then(function(){
+      updateAppTitle();
+      render();
+    });
+  }
+  init();
+})();
+</script>
+</body>
+</html>
