@@ -378,6 +378,38 @@
     color:#fff; font-size:12px; font-weight:700; white-space:nowrap;
   }
   .selection-toolbar button:hover{ background:rgba(255,255,255,0.28); }
+
+  /* month/week: tap-a-cell "day peek" popup */
+  .day-peek-overlay{
+    position:fixed; inset:0; z-index:120; display:flex; align-items:flex-end;
+  }
+  .day-peek-backdrop{ position:absolute; inset:0; background:rgba(35,42,59,0.5); }
+  .day-peek-card{
+    position:relative; width:100%; max-width:560px; margin:0 auto; max-height:82vh;
+    background:var(--card); border-radius:20px 20px 0 0; padding:16px 18px 22px;
+    overflow-y:auto; box-shadow:0 -8px 30px rgba(0,0,0,0.25);
+    animation:dayPeekIn .18s ease-out;
+  }
+  @keyframes dayPeekIn{ from{ transform:translateY(16px); opacity:0; } to{ transform:translateY(0); opacity:1; } }
+  .day-peek-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    margin-bottom:12px; flex-wrap:wrap;
+  }
+  .day-peek-head h3{
+    margin:0; font-family:'Jua', sans-serif; font-weight:400; font-size:18px; color:var(--ink);
+  }
+  .day-peek-head-actions{ display:flex; align-items:center; gap:8px; }
+  .day-peek-close{
+    all:unset; cursor:pointer; width:28px; height:28px; border-radius:50%; text-align:center;
+    line-height:28px; color:var(--ink-soft); background:var(--paper); flex:none;
+  }
+  .day-peek-close:hover{ background:var(--line); color:var(--ink); }
+  @media (min-width:641px){
+    .day-peek-overlay{ align-items:center; }
+    .day-peek-card{ border-radius:16px; max-height:80vh; }
+  }
+  @media print{ .day-peek-overlay{ display:none !important; } }
+
   .stamp-box{
     position:relative; width:28px; height:28px; border-radius:50%;
     border:2px dashed var(--chip-color); flex:none;
@@ -1794,6 +1826,34 @@
   }
 
   // ---------- main render ----------
+  var dayPeekDate = null; // ISO date currently shown in the month/week "peek" popup, or null
+
+  // A large popup showing a day's full content (events, routines, todos,
+  // checklist items) without the small-grid truncation — opened by tapping a
+  // month cell or week-day section instead of jumping straight to the full
+  // day view. Reuses the exact same row-rendering functions as the day view,
+  // so checking items off / right-click editing works identically inside it.
+  function dayPeekHTML(iso, schedule){
+    var dateObj = fromISO(iso);
+    var holiday = KOREAN_HOLIDAYS[iso];
+    var label = dateObj.getFullYear()+'년 '+(dateObj.getMonth()+1)+'월 '+dateObj.getDate()+'일 ('+WEEKDAY_NAMES[dateObj.getDay()]+')'+
+      (holiday ? ' <span class="holiday-tag">'+escapeHTML(holiday)+'</span>' : '');
+    var entries = buildDayEntries(iso, schedule, dateObj);
+    var bodyHTML = entries.length
+      ? '<div class="item-list large">'+entries.map(function(e){ return dayEntryHTML(e, iso); }).join('')+'</div>'
+      : emptyStateHTML('예정된 일정이 없어요 🎈');
+    return '<div class="day-peek-overlay">'+
+      '<div class="day-peek-backdrop" data-peek-close="1"></div>'+
+      '<div class="day-peek-card">'+
+      '<div class="day-peek-head"><h3>'+label+'</h3>'+
+      '<div class="day-peek-head-actions">'+
+      '<button type="button" class="plan-tab" data-peek-goto="'+iso+'">📅 전체 화면</button>'+
+      '<button type="button" class="day-peek-close" data-peek-close="1" aria-label="닫기">✕</button>'+
+      '</div></div>'+
+      bodyHTML+
+      '</div></div>';
+  }
+
   function render(){
     updatePeriodLabel();
     document.getElementById('emptyBanner').style.display = (workbooks.length === 0 && currentView !== 'list') ? 'flex' : 'none';
@@ -1803,6 +1863,11 @@
     else if(currentView === 'week') renderWeek(container, currentDate, schedule);
     else if(currentView === 'day') renderDay(container, currentDate, schedule);
     else renderList(container);
+    if(dayPeekDate && (currentView === 'month' || currentView === 'week')){
+      container.insertAdjacentHTML('beforeend', dayPeekHTML(dayPeekDate, schedule));
+    } else {
+      dayPeekDate = null;
+    }
     document.body.className = 'view-'+currentView;
   }
 
@@ -2170,8 +2235,9 @@
     }
     var reorderBtn = e.target.closest('.reorder-btn');
     if(reorderBtn){
-      var reorderDate = toISO(currentDate);
-      moveDayItem(reorderDate, reorderBtn.getAttribute('data-key'), parseInt(reorderBtn.getAttribute('data-dir'), 10));
+      var rbKey = reorderBtn.getAttribute('data-key');
+      var rbIso = rbKey.split('|')[0];
+      moveDayItem(rbIso, rbKey, parseInt(reorderBtn.getAttribute('data-dir'), 10));
       return;
     }
     var todoRowEl = e.target.closest('.todo-row');
@@ -2227,20 +2293,30 @@
       deleteWorkbookById(delBtn.getAttribute('data-id'));
       return;
     }
-    var cell = e.target.closest('.cell:not(.blank)');
-    if(cell){
-      currentDate = fromISO(cell.getAttribute('data-date'));
+    var peekClose = e.target.closest('[data-peek-close]');
+    if(peekClose){
+      dayPeekDate = null;
+      render();
+      return;
+    }
+    var peekGoto = e.target.closest('[data-peek-goto]');
+    if(peekGoto){
+      currentDate = fromISO(peekGoto.getAttribute('data-peek-goto'));
       currentView = 'day';
+      dayPeekDate = null;
       updateTabsUI();
       render();
       return;
     }
-    var weekHeader = e.target.closest('.week-day h3');
-    if(weekHeader){
-      var section = weekHeader.closest('.week-day');
-      currentDate = fromISO(section.getAttribute('data-date'));
-      currentView = 'day';
-      updateTabsUI();
+    var cell = e.target.closest('.cell:not(.blank)');
+    if(cell){
+      dayPeekDate = cell.getAttribute('data-date');
+      render();
+      return;
+    }
+    var weekSection = e.target.closest('.week-day');
+    if(weekSection){
+      dayPeekDate = weekSection.getAttribute('data-date');
       render();
     }
   });
@@ -2460,7 +2536,10 @@
     }
   });
   document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape') closeContextMenu();
+    if(e.key === 'Escape'){
+      closeContextMenu();
+      if(dayPeekDate){ dayPeekDate = null; render(); }
+    }
   });
   document.getElementById('ctxEdit').addEventListener('click', function(){
     if(contextMenuRoutineId){
@@ -2673,6 +2752,7 @@
     btn.addEventListener('click', function(){
       currentView = btn.getAttribute('data-view');
       clearDaySelection();
+      dayPeekDate = null;
       updateTabsUI();
       render();
     });
@@ -2683,6 +2763,7 @@
     else if(currentView === 'day') currentDate = addDays(currentDate,-1);
     else return;
     clearDaySelection();
+    dayPeekDate = null;
     render();
   });
   document.getElementById('nextBtn').addEventListener('click', function(){
@@ -2691,12 +2772,14 @@
     else if(currentView === 'day') currentDate = addDays(currentDate,1);
     else return;
     clearDaySelection();
+    dayPeekDate = null;
     render();
   });
   document.getElementById('todayBtn').addEventListener('click', function(){
     if(currentView === 'list') return;
     currentDate = new Date();
     clearDaySelection();
+    dayPeekDate = null;
     render();
   });
 
